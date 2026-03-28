@@ -11,6 +11,13 @@ CONFIRMED SCOPE (from initial intent clarification):
 [2026-03-28] Paper 3 should include any other relevant programs found in literature scan, not only Klein Collins — CONFIRMED
 [2026-03-28] Proactive suggestions welcome throughout project — CONFIRMED
 
-PROACTIVE SUGGESTIONS (proposed by Claude, pending or decided):
+PROACTIVE SUGGESTIONS (proposed by Claude, decided 2026-03-28):
 ----------------------------------------------------------------
-(None yet — will be added as the project progresses)
+[2026-03-28] S1: OLS regression for wage gaps in Paper 2 — CONFIRMED
+[2026-03-28] S2: ACS 1-year trend analysis for Paper 1 (additional IPUMS extracts) — CONFIRMED
+[2026-03-28] S3: Architecture (NCARB) as primary comparison model for Papers 2 & 3 — CONFIRMED
+[2026-03-28] S4: NSPS demographic reporting gap framed as a finding, not just limitation — CONFIRMED
+[2026-03-28] S5: DoD SkillBridge + MOS 12T featured prominently in Paper 3 — CONFIRMED
+[2026-03-28] S6: Brief international comparison (UK/Australia) in Paper 2 — CONFIRMED
+[2026-03-28] S7: Disability representation analysis in Paper 2 — DECLINED (keep extract simpler)
+[2026-03-28] S8: Self-employment rates by race/ethnicity in Paper 2 — CONFIRMED
