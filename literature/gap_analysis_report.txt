@@ -1,0 +1,245 @@
+================================================================================
+LITERATURE SCAN GAP ANALYSIS REPORT
+Surveying Workforce Research Series
+Date: 2026-03-28
+Queries: 11 (6 workforce aging/contraction + 5 cross-industry comparison)
+Total sources cataloged: 30
+================================================================================
+
+SECTION 1: SUMMARY OF WHAT EXISTS
+================================================================================
+
+WORKFORCE AGING AND CONTRACTION (Queries 1-6)
+----------------------------------------------
+
+The literature on surveying workforce aging and contraction is SPARSE in peer-
+reviewed venues but RICH in trade/industry sources. Key findings:
+
+PEER-REVIEWED SOURCES (very few):
+- Wiejak-Roy & Edwards (2025) in Survey Review: Regulatory comparison US/UK.
+  Only peer-reviewed paper found specifically on surveying workforce/licensure.
+- Heydari et al. (2024) in JME: Systematic review on DEI in AEC industry.
+  Covers construction broadly but not surveying as a distinct subfield.
+- Bezdek (2009) in ES&T: Geoscience workforce gap projection.
+  Surveying is a small fraction of the geoscience umbrella.
+
+GOVERNMENT/INSTITUTIONAL DATA:
+- BLS Occupational Outlook Handbook (2025): Projects 4% growth for surveyors,
+  5% for surveying technicians 2024-2034. ~3,900 annual openings, mostly
+  replacement. Median wage $72,740.
+- BLS CPS Table 11: 82.8% male, 83.1% White, 3.55% Black (2023 data).
+  Combines surveyors with cartographers and photogrammetrists.
+- NCEES Squared (2024): PS exam 56% first-time pass rate, FS exam ~46%.
+  Low candidate volumes (hundreds). No demographic breakdown of candidates.
+- AGI Geoscience Workforce Projections (2020): 27% workforce loss by 2029
+  due to retirements. Covers geosciences broadly.
+- NSPS Demographics Survey (~2020): 2,409 respondents. 94.3% male, 92.3%
+  White, 0.3% Black. Average age ~58. Critical primary data source.
+
+TRADE AND INDUSTRY SOURCES (most abundant):
+- Multiple trade publications document the crisis consistently: average age
+  57-60, 2-3 retiring for every 1 entering, only 14% under age 34, only
+  ~26 ABET programs remain, several recently closed.
+- SAM apprenticeship program (DOL-certified), NSPS Future of Surveying
+  Initiative, NYSAPLS workforce development efforts documented.
+- American Surveyor policy commentary (March 2026) represents most current
+  trade coverage.
+
+CROSS-INDUSTRY COMPARISONS (Queries 7-11)
+------------------------------------------
+
+Adjacent fields have SUBSTANTIALLY more peer-reviewed research on workforce
+diversity and pipeline issues:
+
+CIVIL ENGINEERING / CONSTRUCTION:
+- ASCE JME published 23+ papers in a 2022 special collection on DEI alone.
+- ASCE JPIEP published a 2018 special issue on diversity in civil/environmental
+  engineering.
+- Systematic literature reviews exist (Heydari et al. 2024).
+- Quantified: <15% women, <20% nonwhite in civil engineering; 3.9% women in
+  executive engineering roles; 92% of construction firms report hiring difficulty.
+- Harvard JCHS, McKinsey, AGC/NCCER provide regular data.
+
+TRADES (PLUMBING/ELECTRICAL):
+- DOL apprenticeship data provides baseline diversity metrics.
+- UA Diversity Pipeline Program (1,200 youth trained), PHCC Equity Hiring
+  Toolkit (18% minority hire increase) documented.
+- Women 2.1% of plumbers, 9% of all apprentices. 80% of tradeswomen report
+  harassment. Pre-apprenticeship programs targeting underrepresented groups
+  showing early promise.
+
+GIS/REMOTE SENSING:
+- Limited demographic data specific to GIS workforce found.
+- Esri and GIM International discuss skills mismatch and demand growth.
+- Market growing ($90B to $263B projected) but workforce demographics not
+  well-studied.
+
+ARCHITECTURE:
+- BEST demographic data infrastructure of any comparison field.
+- NCARB publishes annual "By the Numbers" with detailed race/gender breakdowns.
+- NCARB/NOMA joint survey specifically studies minority licensure experience.
+- AIA published Workplace Experiences Survey (n=1,346).
+- Shows clear progress trajectory: 34% of new architects are people of color
+  (up from 25% in 2019), but Black architects still only 2% of practitioners.
+
+================================================================================
+
+SECTION 2: CRITICAL GAPS IDENTIFIED
+================================================================================
+
+GAP 1 (SEVERE): NO PEER-REVIEWED LONGITUDINAL STUDY OF SURVEYING WORKFORCE
+DEMOGRAPHICS
+- No academic study tracks the size, age distribution, racial composition,
+  or gender breakdown of the licensed surveying workforce over time.
+- The NSPS demographics survey is the closest thing to primary data, but it
+  is a one-time self-selected sample with no peer-reviewed publication.
+- CONTRAST: Architecture has NCARB annual data; geosciences have AGI biennial
+  reports; civil engineering has multiple JME studies.
+
+GAP 2 (SEVERE): NO STATE-BY-STATE LICENSURE TREND DATA IN THE LITERATURE
+- Anecdotal reports of licensure decline are abundant, but no published study
+  compiles PLS/RPLS licensure numbers across states over time.
+- NCEES publishes exam statistics but not demographic breakdowns of candidates
+  or pass rates by race/gender.
+- Individual state boards (e.g., TBPELS in Texas) have records but no
+  aggregated analysis has been published.
+
+GAP 3 (MAJOR): NO EMPIRICAL STUDY OF DIVERSITY/INCLUSION SPECIFICALLY IN
+LAND SURVEYING
+- The closest studies address AEC or construction broadly.
+- No survey instrument has been published studying workplace experiences of
+  women, Black, Hispanic, or other minority land surveyors.
+- CONTRAST: Architecture has the AIA Workplace Experiences Survey and the
+  NCARB/NOMA Joint Survey; construction has the JME special collection.
+
+GAP 4 (MAJOR): SURVEYING EDUCATION PIPELINE NOT SYSTEMATICALLY TRACKED
+- Anecdotal reports of program closures but no comprehensive time series of
+  ABET-accredited surveying program enrollments, graduates, or program counts.
+- No study examines the demographic composition of surveying students.
+- CONTRAST: Engineering broadly has ASEE annual data; architecture has NAAB
+  enrollment data.
+
+GAP 5 (MODERATE): NO ECONOMIC IMPACT STUDY OF THE SURVEYING SHORTAGE
+- No study quantifies the economic impact of surveying workforce shortages
+  on construction timelines, real estate transactions, or infrastructure
+  delivery.
+- PropLogix and trade sources mention project delays anecdotally.
+
+GAP 6 (MODERATE): CROSS-INDUSTRY COMPARISON FRAMEWORK DOES NOT EXIST
+- No published study compares surveying workforce demographics and pipeline
+  to peer professions (civil engineering, architecture, GIS, construction).
+- This would be a significant original contribution.
+
+GAP 7 (MODERATE): APPRENTICESHIP AND ALTERNATIVE PATHWAY OUTCOMES NOT STUDIED
+- SAM apprenticeship and a few other programs documented, but no peer-reviewed
+  evaluation of outcomes (completion rates, licensure rates, retention,
+  demographic composition).
+- CONTRAST: DOL publishes apprenticeship completion data for plumbing and
+  electrical trades.
+
+GAP 8 (MINOR): TECHNOLOGY DISPLACEMENT EFFECTS ON SURVEYING WORKFORCE
+NOT EMPIRICALLY MEASURED
+- BLS notes that drones/technology "may limit growth" but no study quantifies
+  how many positions have been eliminated or created by technology adoption.
+- GeoAI projections (Project Geospatial 2025) are forward-looking estimates,
+  not empirical measurement.
+
+================================================================================
+
+SECTION 3: LITERATURE SPARSITY COMPARISON
+================================================================================
+
+Ranking of peer-reviewed DEI/workforce literature volume by field:
+
+1. CIVIL ENGINEERING / CONSTRUCTION - EXTENSIVE
+   - Multiple special issues, systematic reviews, and individual studies
+   - 23+ papers in JME special collection alone
+   - Regular workforce surveys from AGC, NCCER, Harvard JCHS
+
+2. ARCHITECTURE - SUBSTANTIAL
+   - Annual NCARB demographic data; AIA research program
+   - NCARB/NOMA joint survey on minority experience
+   - Regular tracking of diversity progress in licensure pipeline
+
+3. GEOSCIENCES (broadly) - MODERATE
+   - AGI biennial workforce reports
+   - Bezdek (2009) and follow-up projections
+   - USGS and federal agency workforce data
+
+4. PLUMBING/ELECTRICAL TRADES - LIMITED BUT GROWING
+   - DOL apprenticeship data provides baseline
+   - Emerging DEI program evaluations
+   - Mental health/retention research appearing
+
+5. GIS/REMOTE SENSING - LIMITED
+   - Global market reports but sparse demographic data
+   - Skills mismatch discussed in trade press
+   - No systematic workforce demographics study found
+
+6. LAND SURVEYING - VERY SPARSE (<<< THIS IS YOUR FIELD)
+   - ONE peer-reviewed paper on regulation/accreditation (2025)
+   - ONE non-peer-reviewed analysis on Academia.edu
+   - ONE trade organization survey (NSPS)
+   - Heavy reliance on BLS projections and trade press
+   - NO published DEI study specific to surveying
+   - NO longitudinal workforce tracking
+
+CONCLUSION: Land surveying has the LEAST developed academic literature on
+workforce demographics and diversity of any adjacent field examined. This
+represents both a gap and an opportunity for original contribution. The three-
+paper series has a strong rationale: the literature simply does not exist yet.
+
+================================================================================
+
+SECTION 4: RECOMMENDED PRIORITY SOURCES FOR EACH PAPER
+================================================================================
+
+PAPER 1 (Workforce Crisis):
+Must-cite:
+- BLS OOH Surveyors (2025) -- baseline projections
+- NSPS Demographics Survey -- only primary demographic data
+- NCEES Squared (2024) -- exam/licensure pipeline
+- AGI Workforce Projections (2020) -- parallel field comparison
+- Wiejak-Roy & Edwards (2025) -- only peer-reviewed surveying paper
+Should-cite:
+- Bezdek (2009) -- geoscience shortfall model
+- AGC/NCCER 2025 survey -- construction comparison
+Original data needed:
+- State licensing board data (compile PLS counts 2000-2025)
+- ABET program enrollment time series
+
+PAPER 2 (Demographic Disparity):
+Must-cite:
+- NSPS Demographics Survey -- surveying-specific
+- BLS CPS Table 11 / Data USA -- race/gender data
+- Zippia demographics analysis -- aggregated portrait
+- Heydari et al. (2024) -- AEC systematic review
+- NCARB By the Numbers (2024) -- architecture comparison
+- ASCE JME special collection (2022) -- construction comparison
+Should-cite:
+- AIA Diversity in Architecture (2016) -- comparison
+- DOL apprenticeship data -- trades comparison
+- Harvard JCHS construction workforce -- comparison
+Original data needed:
+- Surveying-specific workplace experience survey (does not exist)
+- NCEES candidate demographics (if obtainable)
+
+PAPER 3 (Pipeline Solutions):
+Must-cite:
+- SAM apprenticeship program documentation
+- UA Diversity Pipeline Program data
+- PHCC Equity Hiring Toolkit results
+- NCARB/NOMA joint survey -- architecture model
+- DOL pre-apprenticeship research
+Should-cite:
+- McKinsey construction workforce solutions
+- OSU geomatics program growth case
+- NSPS Future of Surveying Initiative
+Original data needed:
+- Interviews/surveys with surveying program directors
+- Apprenticeship outcome data (if any programs track it)
+- State-level analysis of licensure pathway reforms
+
+================================================================================
+END OF REPORT
+================================================================================
