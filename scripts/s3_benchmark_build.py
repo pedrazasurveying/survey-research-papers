@@ -48,12 +48,25 @@ def recode_sex(df):
 
 
 def recode_educ(df):
-    conditions = [
-        df["EDUCD"] <= 61,
-        df["EDUCD"].between(62, 81),
-        df["EDUCD"] == 101,
-        df["EDUCD"] >= 114,
-    ]
+    """Education recode — uses EDUCD if available, falls back to EDUC."""
+    if "EDUCD" in df.columns:
+        edu = df["EDUCD"]
+        conditions = [
+            edu <= 61,
+            edu.between(62, 81),
+            edu == 101,
+            edu >= 114,
+        ]
+    elif "EDUC" in df.columns:
+        edu = df["EDUC"]
+        conditions = [
+            edu <= 6,
+            edu.between(7, 9),
+            edu == 10,
+            edu >= 11,
+        ]
+    else:
+        return pd.Series("Unknown", index=df.index)
     choices = ["HS or less", "Some college or AA", "BA or BS", "Graduate degree"]
     return pd.Series(np.select(conditions, choices, default="Unknown"), index=df.index)
 
@@ -149,7 +162,7 @@ def main():
 
     # We need to process the full IPUMS file but only keep columns we need
     needed_cols = ["YEAR", "PERWT", "OCC", "SEX", "AGE", "RACE", "HISPAN",
-                   "EDUCD", "EMPSTAT", "CLASSWKR", "VETSTAT"]
+                   "EDUC", "EDUCD", "EMPSTAT", "CLASSWKR", "VETSTAT"]
 
     print(f"Loading IPUMS extract: {input_path}")
     print("  (This reads the full file to build workforce benchmarks.)")

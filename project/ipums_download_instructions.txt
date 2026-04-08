@@ -28,7 +28,7 @@ the 2019-2023 vintage for more current data.
    - AGE
    - RACE
    - HISPAN (Hispanic origin)
-   - EDUCD (educational attainment, detailed)
+   - EDUC (educational attainment — the detailed version EDUCD is included automatically)
    - EMPSTAT (employment status)
    - CLASSWKR (class of worker)
    - WKSWORK2 (weeks worked per year, categorical)

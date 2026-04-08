@@ -24,11 +24,15 @@ TARGET_OCC = {
 }
 
 # Required variables for analysis
+# Note: EDUC or EDUCD — IPUMS includes EDUCD automatically with EDUC, but
+# the script accepts either. s2_recode.py handles both.
 REQUIRED_VARS = [
     "YEAR", "PERWT", "OCC", "SEX", "AGE", "RACE", "HISPAN",
-    "EDUCD", "EMPSTAT", "CLASSWKR", "WKSWORK2", "UHRSWORK",
+    "EMPSTAT", "CLASSWKR", "WKSWORK2", "UHRSWORK",
     "INCWAGE", "INCEARN", "VETSTAT", "STATEFIP", "METRO", "IND",
 ]
+# At least one of these must be present
+EDUC_VARS = ["EDUCD", "EDUC"]
 
 # Replicate weight columns
 REPWT_COLS = [f"REPWTP{i}" for i in range(1, 81)]
@@ -100,6 +104,16 @@ def validate_variables(df: pd.DataFrame) -> bool:
         print("  These variables are needed for the analysis pipeline.")
         print("  Please check your IPUMS extract includes them.")
         return False
+
+    # Check education variable (EDUCD preferred, EDUC acceptable)
+    has_educ = any(v in df.columns for v in EDUC_VARS)
+    if not has_educ:
+        print("WARNING: Neither EDUCD nor EDUC found.")
+        print("  Add EDUC to your IPUMS extract (EDUCD comes automatically).")
+        return False
+    else:
+        educ_found = [v for v in EDUC_VARS if v in df.columns]
+        print(f"  Education variable(s) present: {educ_found}")
 
     # Check replicate weights
     repwt_present = [c for c in REPWT_COLS if c in df.columns]

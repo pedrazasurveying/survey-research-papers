@@ -59,13 +59,30 @@ def recode_race_ethnicity(df: pd.DataFrame) -> pd.Series:
 
 
 def recode_education(df: pd.DataFrame) -> pd.Series:
-    """EDUCD detailed -> 4-category education variable."""
-    conditions = [
-        df["EDUCD"] <= 61,                     # HS or less
-        df["EDUCD"].between(62, 81),           # Some college or AA
-        df["EDUCD"] == 101,                    # BA or BS
-        df["EDUCD"] >= 114,                    # Graduate degree
-    ]
+    """Education -> 4-category variable. Uses EDUCD if available, falls back to EDUC."""
+    if "EDUCD" in df.columns:
+        # EDUCD detailed codes
+        edu = df["EDUCD"]
+        conditions = [
+            edu <= 61,                     # HS or less
+            edu.between(62, 81),           # Some college or AA
+            edu == 101,                    # BA or BS
+            edu >= 114,                    # Graduate degree
+        ]
+    elif "EDUC" in df.columns:
+        # EDUC general codes (fallback)
+        # 0-6: HS or less, 7-9: Some college/AA, 10: BA/BS, 11: Graduate
+        edu = df["EDUC"]
+        conditions = [
+            edu <= 6,                      # HS or less
+            edu.between(7, 9),             # Some college or AA
+            edu == 10,                     # 4 years of college (BA/BS)
+            edu >= 11,                     # 5+ years (Graduate)
+        ]
+    else:
+        print("  WARNING: Neither EDUCD nor EDUC found. Education recode skipped.")
+        return pd.Series("Unknown", index=df.index)
+
     choices = [
         "HS or less",
         "Some college or AA",
