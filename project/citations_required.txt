@@ -1,0 +1,15 @@
+Required Citations for All Papers
+===================================
+
+IPUMS USA (required in every paper):
+Steven Ruggles, Sarah Flood, Matthew Sobek, Daniel Backman, Grace Cooper,
+Julia A. Rivera Drew, Stephanie Richards, Renae Rodgers, Jonathan Schroeder,
+and Kari C.W. Williams. IPUMS USA: Version 16.0 [dataset]. Minneapolis, MN:
+IPUMS, 2025. https://doi.org/10.18128/D010.V16.0
+
+IPUMS account: jose@pedrazasurveying.com
+Extract number: 2
+Data: ACS 2020-2024 5-year
+
+For policy briefs / trade publications (shorter form):
+IPUMS USA, University of Minnesota, www.ipums.org
