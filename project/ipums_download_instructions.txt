@@ -1,0 +1,80 @@
+IPUMS Data Download Instructions
+==================================
+Surveying Workforce Research Series
+Date: 2026-03-28
+
+EXTRACT 1: MAIN EXTRACT (ACS 5-Year Pooled)
+=============================================
+
+1. Create account at https://usa.ipums.org/usa/ (free for research)
+
+2. Select Sample:
+   - ACS 2019-2023, 5-year
+
+3. Select Variables:
+   Pre-selected (confirm in cart):
+   - YEAR, SAMPLE, SERIAL, CBSERIAL, HHWT, CLUSTER, STRATA, GQ
+
+   Add manually:
+   - PERWT (person weight)
+   - REPWTP (replicate weights — confirm all 80 appear: REPWTP1–REPWTP80)
+   - OCC (occupation code)
+   - OCCSOC (SOC occupation code)
+   - SEX
+   - AGE
+   - RACE
+   - HISPAN (Hispanic origin)
+   - EDUCD (educational attainment, detailed)
+   - EMPSTAT (employment status)
+   - CLASSWKR (class of worker)
+   - WKSWORK2 (weeks worked per year, categorical)
+   - UHRSWORK (usual hours worked per week)
+   - INCWAGE (wage and salary income)
+   - INCEARN (total personal earned income)
+   - VETSTAT (veteran status)
+   - STATEFIP (state FIPS code)
+   - METRO (metropolitan area status)
+   - IND (industry)
+
+4. Extract Options:
+   - Format: CSV
+   - Structure: Rectangular - Person
+   - Data quality flags: unchecked
+   - Case selection: leave blank
+   - Description: "Surveying workforce research series – ACS 2019-2023 5yr – P1/P2/P3"
+
+5. Submit, download when ready (~5-30 min), decompress:
+   gunzip usa_00001.csv.gz
+
+6. Save data file (.csv) and DDI codebook (.xml) to data/raw/
+
+Expected: ~15-16 million rows, ~5-8 GB uncompressed.
+
+
+EXTRACT 2: TREND EXTRACT (ACS 1-Year, Multiple Years)
+======================================================
+
+Purpose: Paper 1 aging trend analysis (Suggestion 2, confirmed)
+
+1. Select Samples:
+   - ACS 2010, 1-year
+   - ACS 2015, 1-year
+   - ACS 2019, 1-year
+   - ACS 2021, 1-year
+   - ACS 2022, 1-year
+   - ACS 2023, 1-year
+
+2. Same variables as Extract 1
+
+3. Same extract options (CSV, Rectangular - Person)
+
+4. Save to data/raw/ with distinct filename
+
+Expected: smaller than main extract (1-year samples ~3M rows each)
+
+
+NOTES:
+- Do NOT use 1-year samples for the primary analysis (too few surveyors)
+- The 5-year pooled sample is required for reliable subgroup estimates
+- REPWTP replicate weights are CRITICAL — halt if missing
+- Disability variables (DIFFREM, DIFFEYE, DIFFPHYS) NOT included per user decision
