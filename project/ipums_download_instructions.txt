@@ -1,15 +1,19 @@
 IPUMS Data Download Instructions
 ==================================
 Surveying Workforce Research Series
-Date: 2026-03-28
+Date: 2026-04-08 (updated)
 
 EXTRACT 1: MAIN EXTRACT (ACS 5-Year Pooled)
 =============================================
 
+NOTE: The ACS 2020-2024 5-year data was released by the Census Bureau
+on March 5, 2026 and is now available on IPUMS. Use this instead of
+the 2019-2023 vintage for more current data.
+
 1. Create account at https://usa.ipums.org/usa/ (free for research)
 
 2. Select Sample:
-   - ACS 2019-2023, 5-year
+   - ACS 2020-2024, 5-year  (released March 2026)
 
 3. Select Variables:
    Pre-selected (confirm in cart):
@@ -41,7 +45,7 @@ EXTRACT 1: MAIN EXTRACT (ACS 5-Year Pooled)
    - Structure: Rectangular - Person
    - Data quality flags: unchecked
    - Case selection: leave blank
-   - Description: "Surveying workforce research series – ACS 2019-2023 5yr – P1/P2/P3"
+   - Description: "Surveying workforce research series – ACS 2020-2024 5yr – P1/P2/P3"
 
 5. Submit, download when ready (~5-30 min), decompress:
    gunzip usa_00001.csv.gz
@@ -63,6 +67,7 @@ Purpose: Paper 1 aging trend analysis (Suggestion 2, confirmed)
    - ACS 2021, 1-year
    - ACS 2022, 1-year
    - ACS 2023, 1-year
+   - ACS 2024, 1-year
 
 2. Same variables as Extract 1
 

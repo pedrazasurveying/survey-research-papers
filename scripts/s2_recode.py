@@ -14,13 +14,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# CPI-U annual deflators to adjust to 2023 dollars
+# CPI-U annual deflators to adjust to 2024 dollars
+# Source: BLS CPI-U annual averages. Update if final 2024 value changes.
 CPI_DEFLATORS = {
-    2019: 1.153,
-    2020: 1.137,
-    2021: 1.080,
-    2022: 1.016,
-    2023: 1.000,
+    2019: 1.188,
+    2020: 1.172,
+    2021: 1.113,
+    2022: 1.047,
+    2023: 1.031,
+    2024: 1.000,
 }
 
 # IPUMS missing codes to convert to NaN

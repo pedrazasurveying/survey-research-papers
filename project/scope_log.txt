@@ -21,3 +21,4 @@ PROACTIVE SUGGESTIONS (proposed by Claude, decided 2026-03-28):
 [2026-03-28] S6: Brief international comparison (UK/Australia) in Paper 2 — CONFIRMED
 [2026-03-28] S7: Disability representation analysis in Paper 2 — DECLINED (keep extract simpler)
 [2026-03-28] S8: Self-employment rates by race/ethnicity in Paper 2 — CONFIRMED
+[2026-04-08] DATA UPDATE: Switch from ACS 2019-2023 to ACS 2020-2024 5-year (released March 5, 2026). More current data strengthens the "now" argument. CPI deflators updated to adjust to 2024 dollars. Trend extract now includes 2024 1-year.
