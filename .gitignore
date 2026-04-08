@@ -1,0 +1,24 @@
+# Large IPUMS data files (too big for GitHub)
+data/raw/*.csv
+data/raw/*.csv.gz
+data/raw/*.dta
+data/raw/*.dat
+data/raw/*.sas7bdat
+
+# Keep the XML codebook
+!data/raw/*.xml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
