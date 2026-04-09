@@ -1,7 +1,15 @@
 """
-Subagent 5B: TABLE_BUILD — Paper 2
-====================================
-Read Paper 2 analysis CSVs and produce APA 7 formatted .docx tables.
+Subagent 5B: TABLES_P2
+========================
+Read Paper 2 analysis CSV outputs (demographic disparity and earnings gaps)
+and produce APA 7 formatted publication-ready tables as .docx files.
+
+Tables produced:
+    1. Table 1 -- Demographic Composition of Surveyors and Survey Technicians
+    2. Table 2 -- Representation of Surveyors Relative to U.S. Workforce
+    3. Table 3 -- Median Annual Earnings by Demographic Group (Surveyors)
+    4. Table 4 -- OLS Regression Results: Log Hourly Wage
+    5. Table 5 -- Geographic Variation in Surveyor Demographics (Top 10 States)
 
 Usage:
     python scripts/s5b_tables_p2.py
@@ -14,142 +22,58 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
 from docx import Document
-from docx.shared import Pt, Inches, Cm
+from docx.shared import Inches, Pt, Cm, Emu
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
 
+
 # ---------------------------------------------------------------------------
-# APA 7 table helpers
+# APA 7 formatting constants
 # ---------------------------------------------------------------------------
 FONT_NAME = "Times New Roman"
-BODY_SIZE = Pt(11)
-TITLE_SIZE = Pt(12)
-NOTE_SIZE = Pt(10)
+FONT_SIZE_BODY = Pt(11)
+FONT_SIZE_TITLE = Pt(12)
+FONT_SIZE_NOTE = Pt(10)
+TABLE_WIDTH = Inches(6.5)
+
+# Suppression / em-dash character
+EM_DASH = "\u2014"
 
 
-def set_cell_font(cell, text, bold=False, italic=False, size=BODY_SIZE,
-                  alignment=WD_ALIGN_PARAGRAPH.CENTER):
-    """Set cell text with consistent formatting."""
-    cell.text = ""
-    p = cell.paragraphs[0]
-    p.alignment = alignment
-    run = p.add_run(str(text))
-    run.font.name = FONT_NAME
-    run.font.size = size
-    run.font.bold = bold
-    run.font.italic = italic
-    # Set east-asian font
-    rPr = run._element.get_or_add_rPr()
-    rFonts = rPr.find(qn("w:rFonts"))
-    if rFonts is None:
-        rFonts = parse_xml(f'<w:rFonts {nsdecls("w")} w:eastAsia="{FONT_NAME}"/>')
-        rPr.append(rFonts)
-
-
-def set_cell_borders(cell, top=None, bottom=None, left=None, right=None):
-    """Set individual cell borders."""
-    tc = cell._element
-    tcPr = tc.find(qn("w:tcPr"))
-    if tcPr is None:
-        tcPr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
-        tc.insert(0, tcPr)
-    borders = tcPr.find(qn("w:tcBorders"))
-    if borders is None:
-        borders = parse_xml(f'<w:tcBorders {nsdecls("w")}/>')
-        tcPr.append(borders)
-
-    for side, val in [("top", top), ("bottom", bottom), ("left", left), ("right", right)]:
-        if val is not None:
-            border = parse_xml(
-                f'<w:{side} {nsdecls("w")} w:val="{val}" w:sz="4" w:space="0" w:color="000000"/>'
-            )
-            existing = borders.find(qn(f"w:{side}"))
-            if existing is not None:
-                borders.remove(existing)
-            borders.append(border)
-
-
-def apa_table_lines(table, n_header_rows=1):
-    """Apply APA 7 border rules: top, below header, bottom only."""
-    for i, row in enumerate(table.rows):
-        for cell in row.cells:
-            if i == 0:
-                set_cell_borders(cell, top="single", bottom="single",
-                                 left="none", right="none")
-            elif i == n_header_rows - 1:
-                set_cell_borders(cell, bottom="single", left="none",
-                                 right="none", top="none")
-            elif i == len(table.rows) - 1:
-                set_cell_borders(cell, bottom="single", left="none",
-                                 right="none", top="none")
-            else:
-                set_cell_borders(cell, top="none", bottom="none",
-                                 left="none", right="none")
-
-
-def add_table_note(doc, text):
-    """Add an APA 7 table note paragraph."""
-    p = doc.add_paragraph()
-    run = p.add_run(f"Note. {text}")
-    run.font.name = FONT_NAME
-    run.font.size = NOTE_SIZE
-    run.font.italic = True
-
-
-def add_table_title(doc, number, title):
-    """Add APA 7 table title."""
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run = p.add_run(f"Table {number}")
-    run.font.name = FONT_NAME
-    run.font.size = TITLE_SIZE
-    run.font.bold = True
-    run.font.italic = True
-    p2 = doc.add_paragraph()
-    p2.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run2 = p2.add_run(title)
-    run2.font.name = FONT_NAME
-    run2.font.size = TITLE_SIZE
-    run2.font.italic = True
-
-
-def fmt_pct(val):
-    """Format percentage to 1 decimal."""
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+def fmt_pct(val, decimals=1):
+    """Format percentage with specified decimals. Return em dash for NaN."""
     if pd.isna(val):
-        return "—"
-    return f"{val:.1f}"
+        return EM_DASH
+    return f"{val:.{decimals}f}"
 
 
-def fmt_n(val):
-    """Format count with comma separator."""
+def fmt_dollars(val, decimals=0):
+    """Format dollar value with comma separator. Return em dash for NaN."""
     if pd.isna(val):
-        return "—"
-    return f"{val:,.0f}"
+        return EM_DASH
+    if decimals == 0:
+        return "$" + f"{val:,.0f}"
+    return "$" + f"{val:,.{decimals}f}"
 
 
-def fmt_dollar(val):
-    """Format dollar amount."""
+def fmt_int(val):
+    """Format integer with comma separator. Return em dash for NaN."""
     if pd.isna(val):
-        return "—"
-    return f"${val:,.0f}"
-
-
-def fmt_ci(median, ci_lo, ci_hi):
-    """Format median with 95% CI."""
-    if pd.isna(median):
-        return "—"
-    if pd.isna(ci_lo) or pd.isna(ci_hi):
-        return fmt_dollar(median)
-    return f"${median:,.0f} [{ci_lo:,.0f}, {ci_hi:,.0f}]"
+        return EM_DASH
+    return f"{int(val):,}"
 
 
 def fmt_pval(p):
     """Format p-value with significance stars."""
     if pd.isna(p):
-        return "—"
+        return EM_DASH
     if p < 0.001:
         return "< .001***"
     elif p < 0.01:
@@ -160,436 +84,977 @@ def fmt_pval(p):
         return f"{p:.3f}"
 
 
-def load_csv(path):
-    """Load CSV, return None if missing."""
+def sig_stars(p):
+    """Return significance stars only."""
+    if pd.isna(p):
+        return ""
+    if p < 0.001:
+        return "***"
+    elif p < 0.01:
+        return "**"
+    elif p < 0.05:
+        return "*"
+    return ""
+
+
+def fmt_coef(val, decimals=4):
+    """Format a regression coefficient."""
+    if pd.isna(val):
+        return EM_DASH
+    return f"{val:.{decimals}f}"
+
+
+def fmt_pct_se(pct, se):
+    """Format 'XX.X (Y.Y)' for percentage with SE."""
+    if pd.isna(pct):
+        return EM_DASH
+    pct_str = f"{pct:.1f}"
+    if pd.isna(se) or se == 0:
+        return pct_str
+    return f"{pct_str} ({se:.1f})"
+
+
+def fmt_ci_dollars(median_val, ci_lower, ci_upper):
+    """Format '$Median [$CI_lower, $CI_upper]'."""
+    if pd.isna(median_val):
+        return EM_DASH
+    med = "$" + f"{median_val:,.0f}"
+    lo = ("$" + f"{ci_lower:,.0f}") if not pd.isna(ci_lower) else "?"
+    hi = ("$" + f"{ci_upper:,.0f}") if not pd.isna(ci_upper) else "?"
+    return f"{med} [{lo}, {hi}]"
+
+
+# ---------------------------------------------------------------------------
+# APA 7 Document and Table construction helpers
+# ---------------------------------------------------------------------------
+def create_apa_document():
+    """Create a new Document with APA 7 default styles."""
+    doc = Document()
+    style = doc.styles["Normal"]
+    font = style.font
+    font.name = FONT_NAME
+    font.size = FONT_SIZE_BODY
+    for section in doc.sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+    return doc
+
+
+def add_table_title(doc, title_text):
+    """Add an APA 7 table title: bold, 12pt, flush left."""
+    para = doc.add_paragraph()
+    run = para.add_run(title_text)
+    run.bold = True
+    run.font.size = FONT_SIZE_TITLE
+    run.font.name = FONT_NAME
+    para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    para.paragraph_format.space_after = Pt(4)
+    para.paragraph_format.space_before = Pt(12)
+    return para
+
+
+def add_table_note(doc, note_text):
+    """Add an APA 7 table note in 10pt italic."""
+    para = doc.add_paragraph()
+    run = para.add_run("Note. ")
+    run.italic = True
+    run.font.size = FONT_SIZE_NOTE
+    run.font.name = FONT_NAME
+    run2 = para.add_run(note_text)
+    run2.italic = True
+    run2.font.size = FONT_SIZE_NOTE
+    run2.font.name = FONT_NAME
+    para.paragraph_format.space_before = Pt(4)
+    para.paragraph_format.space_after = Pt(12)
+    return para
+
+
+def set_cell_text(cell, text, bold=False, alignment=WD_ALIGN_PARAGRAPH.LEFT):
+    """Set cell text with APA formatting."""
+    cell.text = ""
+    para = cell.paragraphs[0]
+    run = para.add_run(str(text))
+    run.font.name = FONT_NAME
+    run.font.size = FONT_SIZE_BODY
+    run.bold = bold
+    para.alignment = alignment
+    # Reduce cell padding
+    cell_xml = cell._tc
+    tcPr = cell_xml.get_or_add_tcPr()
+    tcMar = parse_xml(
+        '<w:tcMar ' + nsdecls("w") + '>'
+        '<w:top w:w="40" w:type="dxa"/>'
+        '<w:bottom w:w="40" w:type="dxa"/>'
+        '<w:left w:w="60" w:type="dxa"/>'
+        '<w:right w:w="60" w:type="dxa"/>'
+        '</w:tcMar>'
+    )
+    tcPr.append(tcMar)
+
+
+def remove_all_borders(table):
+    """Remove all cell borders from a table."""
+    tbl = table._tbl
+    for cell in tbl.iter_tcs():
+        tcPr = cell.get_or_add_tcPr()
+        tcBorders = parse_xml(
+            '<w:tcBorders ' + nsdecls("w") + '>'
+            '<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '<w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+            '</w:tcBorders>'
+        )
+        tcPr.append(tcBorders)
+
+
+def set_row_border_bottom(row, sz="4", color="000000"):
+    """Add a bottom border to every cell in a row."""
+    for cell in row.cells:
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcBorders = parse_xml(
+            '<w:tcBorders ' + nsdecls("w") + '>'
+            '<w:bottom w:val="single" w:sz="' + sz + '" w:space="0" w:color="' + color + '"/>'
+            '</w:tcBorders>'
+        )
+        tcPr.append(tcBorders)
+
+
+def set_row_border_top(row, sz="4", color="000000"):
+    """Add a top border to every cell in a row."""
+    for cell in row.cells:
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcBorders = parse_xml(
+            '<w:tcBorders ' + nsdecls("w") + '>'
+            '<w:top w:val="single" w:sz="' + sz + '" w:space="0" w:color="' + color + '"/>'
+            '</w:tcBorders>'
+        )
+        tcPr.append(tcBorders)
+
+
+def apply_apa_borders(table, header_row_count=1):
+    """
+    Apply APA 7 borders: top of table, below header, bottom of table.
+    No vertical lines, no other horizontal lines.
+    """
+    remove_all_borders(table)
+    set_row_border_top(table.rows[0], sz="8")
+    set_row_border_bottom(table.rows[header_row_count - 1], sz="4")
+    set_row_border_bottom(table.rows[-1], sz="8")
+
+
+def load_csv_safe(path):
+    """Load a CSV, returning None and printing a warning if the file is missing."""
     if not path.exists():
-        print(f"  WARNING: {path.name} not found. Skipping.")
+        print(f"  WARNING: {path} not found. Skipping dependent table.")
         return None
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    print(f"  Loaded {path.name} ({len(df)} rows)")
+    return df
 
 
 # ---------------------------------------------------------------------------
-# Table builders
+# Table 1: Demographic Composition of Surveyors and Survey Technicians
 # ---------------------------------------------------------------------------
-def build_table1(doc, composition, chi2_df):
-    """Table 1: Demographic Composition."""
-    add_table_title(doc, 1, "Demographic Composition of Surveyors and Survey Technicians")
+def build_table1(doc, comp_df, chi2_df):
+    """
+    Panel A: Race/Ethnicity, Panel B: Sex, Panel C: Education, Panel D: Veteran Status.
+    Columns: Category | Surveyors % (SE) | Technicians % (SE) | chi-square p-value
+    """
+    print("\n  Building Table 1: Demographic Composition...")
 
-    # Build panels
+    add_table_title(
+        doc,
+        "Table 1\n"
+        "Demographic Composition of Surveyors and Survey Technicians, "
+        "ACS 2020\u20132024"
+    )
+
+    # Panel definitions: (panel_label, variable_name, category_order)
     panels = [
-        ("A", "Race/Ethnicity", "race_eth"),
-        ("B", "Sex", "sex_r"),
-        ("C", "Education", "educ_r"),
-        ("D", "Veteran Status", "veteran"),
+        ("Panel A: Race/Ethnicity", "race_eth",
+         ["NH White", "NH Black", "Hispanic", "NH Asian", "NH Other"]),
+        ("Panel B: Sex", "sex_r",
+         ["Male", "Female"]),
+        ("Panel C: Education", "educ_r",
+         ["HS or less", "Some college or AA", "BA or BS", "Graduate degree"]),
+        ("Panel D: Veteran Status", "veteran",
+         ["Veteran", "Non-veteran"]),
     ]
 
-    headers = ["Category", "Surveyors % (SE)", "Technicians % (SE)", "n (Surv.)", "n (Tech.)"]
-    rows_data = []
+    # Count total data rows + panel headers + column header
+    total_rows = 1  # header row
+    for panel_label, var, cats in panels:
+        total_rows += 1  # panel label row
+        cats_in_data = [c for c in cats
+                        if len(comp_df[(comp_df["variable"] == var)
+                                       & (comp_df["category"] == c)]) > 0]
+        total_rows += len(cats_in_data)
 
-    for panel_letter, panel_label, var in panels:
-        rows_data.append((f"Panel {panel_letter}: {panel_label}", "", "", "", ""))
-
-        surv = composition[(composition["variable"] == var) & (composition["occupation"] == "Surveyors")]
-        tech = composition[(composition["variable"] == var) & (composition["occupation"] == "Technicians")]
-
-        # Get all categories from both
-        cats = list(surv["category"].unique())
-        for cat in tech["category"].unique():
-            if cat not in cats:
-                cats.append(cat)
-
-        for cat in cats:
-            s_row = surv[surv["category"] == cat]
-            t_row = tech[tech["category"] == cat]
-
-            s_pct = f"{s_row.iloc[0]['weighted_pct']:.1f} ({s_row.iloc[0]['se']:.2f})" if len(s_row) > 0 else "—"
-            t_pct = f"{t_row.iloc[0]['weighted_pct']:.1f} ({t_row.iloc[0]['se']:.2f})" if len(t_row) > 0 else "—"
-            s_n = fmt_n(s_row.iloc[0]["unweighted_n"]) if len(s_row) > 0 else "—"
-            t_n = fmt_n(t_row.iloc[0]["unweighted_n"]) if len(t_row) > 0 else "—"
-
-            rows_data.append((f"  {cat}", s_pct, t_pct, s_n, t_n))
-
-        # Add chi-square result if available
-        if chi2_df is not None and len(chi2_df) > 0:
-            chi_row = chi2_df[chi2_df["variable"] == var]
-            if len(chi_row) > 0:
-                p = chi_row.iloc[0]["p_value"]
-                chi2_val = chi_row.iloc[0]["chi2"]
-                dof = chi_row.iloc[0]["dof"]
-                sig = fmt_pval(p)
-                rows_data.append((f"  χ²({dof:.0f}) = {chi2_val:.1f}, p {sig}", "", "", "", ""))
-
-    # Create table
-    n_rows = len(rows_data) + 1  # +1 for header
-    table = doc.add_table(rows=n_rows, cols=len(headers))
+    num_cols = 4
+    table = doc.add_table(rows=total_rows, cols=num_cols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
+
+    # Header row
+    headers = ["Demographic Group", "Surveyors % (SE)", "Technicians % (SE)",
+               "\u03c7\u00b2 p-value"]
+    for j, h in enumerate(headers):
+        align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
+        set_cell_text(table.rows[0].cells[j], h, bold=True, alignment=align)
+
+    row_idx = 1
+    for panel_label, var, cat_order in panels:
+        # Panel label row (merge all cells)
+        row = table.rows[row_idx]
+        for ci in range(1, num_cols):
+            row.cells[0].merge(row.cells[ci])
+        set_cell_text(row.cells[0], panel_label, bold=True)
+        row_idx += 1
+
+        # Get chi2 p-value for this variable
+        chi2_p = None
+        if chi2_df is not None and len(chi2_df) > 0:
+            chi2_row = chi2_df[chi2_df["variable"] == var]
+            if len(chi2_row) > 0:
+                chi2_p = chi2_row.iloc[0]["p_value"]
+
+        cats_in_data = [c for c in cat_order
+                        if len(comp_df[(comp_df["variable"] == var)
+                                       & (comp_df["category"] == c)]) > 0]
+
+        for k, cat in enumerate(cats_in_data):
+            row = table.rows[row_idx]
+
+            # Category label (indented)
+            set_cell_text(row.cells[0], f"  {cat}")
+
+            # Surveyors
+            sv = comp_df[(comp_df["variable"] == var) &
+                         (comp_df["category"] == cat) &
+                         (comp_df["occupation"] == "Surveyors")]
+            if len(sv) > 0:
+                sv = sv.iloc[0]
+                set_cell_text(row.cells[1],
+                              fmt_pct_se(sv["weighted_pct"], sv["se"]),
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                set_cell_text(row.cells[1], EM_DASH,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+
+            # Technicians
+            tc = comp_df[(comp_df["variable"] == var) &
+                         (comp_df["category"] == cat) &
+                         (comp_df["occupation"] == "Technicians")]
+            if len(tc) > 0:
+                tc = tc.iloc[0]
+                set_cell_text(row.cells[2],
+                              fmt_pct_se(tc["weighted_pct"], tc["se"]),
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                set_cell_text(row.cells[2], EM_DASH,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+
+            # chi-square p-value (only on first category row of each panel)
+            if k == 0 and chi2_p is not None:
+                set_cell_text(row.cells[3], fmt_pval(chi2_p),
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                set_cell_text(row.cells[3], "",
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+
+            row_idx += 1
+
+    apply_apa_borders(table, header_row_count=1)
+
+    add_table_note(
+        doc,
+        "Weighted percentages with BRR standard errors (Fay k = 0.5) "
+        "in parentheses. \u03c7\u00b2 test compares distributions between "
+        "Surveyors (OCC 1310) and Technicians (OCC 1560). "
+        "Data source: IPUMS ACS 2020\u20132024 5-year pooled microdata. "
+        "***p < .001, **p < .01, *p < .05."
+    )
+
+    print("    Table 1 complete.")
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Table 2: Representation of Surveyors Relative to U.S. Workforce
+# ---------------------------------------------------------------------------
+def build_table2(doc, ratios_df):
+    """
+    Columns: Demographic Group | Surveyor Share (%) | U.S. Workforce Share (%) |
+             Representation Ratio | Assessment
+    """
+    print("\n  Building Table 2: Representation Ratios...")
+
+    add_table_title(
+        doc,
+        "Table 2\n"
+        "Representation of Surveyors Relative to the U.S. Civilian Workforce, "
+        "ACS 2020\u20132024"
+    )
+
+    # Category display order
+    cat_order = ["Male", "Female", "NH White", "NH Black", "Hispanic",
+                 "NH Asian", "Veteran"]
+    display_df = ratios_df.set_index("category").reindex(
+        [c for c in cat_order if c in ratios_df["category"].values]
+    ).reset_index()
+
+    num_cols = 5
+    num_rows = 1 + len(display_df)  # header + data
+    table = doc.add_table(rows=num_rows, cols=num_cols)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
 
     # Header
+    headers = ["Demographic Group", "Surveyor Share (%)",
+               "U.S. Workforce Share (%)", "Representation Ratio", "Assessment"]
     for j, h in enumerate(headers):
         align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-        set_cell_font(table.rows[0].cells[j], h, bold=True, alignment=align)
+        set_cell_text(table.rows[0].cells[j], h, bold=True, alignment=align)
 
-    # Data
-    for i, row_data in enumerate(rows_data):
-        for j, val in enumerate(row_data):
-            is_panel = val.startswith("Panel")
-            align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-            set_cell_font(table.rows[i + 1].cells[j], val, bold=is_panel, alignment=align)
+    for i, (_, row_data) in enumerate(display_df.iterrows()):
+        row = table.rows[i + 1]
+        set_cell_text(row.cells[0], row_data["category"])
+        set_cell_text(row.cells[1], fmt_pct(row_data["surveyor_pct"]),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_text(row.cells[2], fmt_pct(row_data["us_workforce_pct"]),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    apa_table_lines(table)
+        ratio = row_data["representation_ratio"]
+        ratio_str = f"{ratio:.2f}" if not pd.isna(ratio) else EM_DASH
+        set_cell_text(row.cells[3], ratio_str,
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    add_table_note(doc,
-        "Weighted percentages with BRR standard errors (Fay k = 0.5) in parentheses. "
-        "n = unweighted sample size. Chi-square tests compare composition between "
-        "surveyors and technicians. Data: ACS 2020–2024 5-year IPUMS microdata. "
-        "***p < .001, **p < .01, *p < .05.")
+        flag = row_data.get("flag", "")
+        if pd.isna(flag):
+            flag = ""
+        assessment = flag if flag else "Proportionate"
+        if "SEVERE" in str(flag).upper():
+            assessment = "Severe under-repr."
+        elif "under" in str(flag).lower():
+            assessment = "Under-represented"
+        set_cell_text(row.cells[4], assessment,
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    doc.add_page_break()
+    apply_apa_borders(table, header_row_count=1)
 
-
-def build_table2(doc, ratios):
-    """Table 2: Representation Ratios."""
-    add_table_title(doc, 2, "Representation of Surveyors Relative to U.S. Workforce")
-
-    headers = ["Demographic Group", "Surveyor %", "U.S. Workforce %",
-               "Representation Ratio", "Assessment"]
-
-    n_rows = len(ratios) + 1
-    table = doc.add_table(rows=n_rows, cols=len(headers))
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-    for j, h in enumerate(headers):
-        align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-        set_cell_font(table.rows[0].cells[j], h, bold=True, alignment=align)
-
-    for i, (_, row) in enumerate(ratios.iterrows()):
-        cat = row["category"]
-        s_pct = fmt_pct(row["surveyor_pct"])
-        us_pct = fmt_pct(row["us_workforce_pct"])
-        ratio = f"{row['representation_ratio']:.2f}" if not pd.isna(row["representation_ratio"]) else "—"
-        flag = row.get("flag", "")
-        if not flag:
-            if not pd.isna(row["representation_ratio"]):
-                if row["representation_ratio"] >= 0.8:
-                    flag = "Near parity"
-                elif row["representation_ratio"] >= 1.2:
-                    flag = "Overrepresented"
-
-        set_cell_font(table.rows[i + 1].cells[0], cat, alignment=WD_ALIGN_PARAGRAPH.LEFT)
-        set_cell_font(table.rows[i + 1].cells[1], s_pct)
-        set_cell_font(table.rows[i + 1].cells[2], us_pct)
-        set_cell_font(table.rows[i + 1].cells[3], ratio)
-        set_cell_font(table.rows[i + 1].cells[4], flag, alignment=WD_ALIGN_PARAGRAPH.LEFT)
-
-    apa_table_lines(table)
-
-    add_table_note(doc,
+    add_table_note(
+        doc,
         "Representation ratio = surveyor share / U.S. workforce share. "
-        "Ratios below 0.50 indicate severe underrepresentation; 0.50–0.80 indicate "
-        "underrepresentation; 0.80–1.20 indicate near parity. "
-        "Data: ACS 2020–2024 5-year IPUMS microdata.")
+        "Ratios below 0.80 indicate under-representation; below 0.50 "
+        "indicates severe under-representation. "
+        "Data source: IPUMS ACS 2020\u20132024."
+    )
 
-    doc.add_page_break()
+    print("    Table 2 complete.")
+    return True
 
 
-def build_table3(doc, wage_gaps, earnings_core):
-    """Table 3: Median Annual Earnings and Wage Gaps."""
-    add_table_title(doc, 3, "Median Annual Earnings by Demographic Group, Surveyors (OCC 1310)")
+# ---------------------------------------------------------------------------
+# Table 3: Median Annual Earnings by Demographic Group (Surveyors)
+# ---------------------------------------------------------------------------
+def build_table3(doc, earnings_df, gaps_df):
+    """
+    Gender rows, Race/ethnicity rows, Veteran rows.
+    Columns: Group | Median Earnings (95% CI) | n | Gap vs. Reference ($) | Gap (%)
+    Reference groups: Male (for gender), NH White (for race).
+    """
+    print("\n  Building Table 3: Earnings by Demographic Group...")
 
-    headers = ["Group", "Median Earnings (95% CI)", "n", "Gap ($)", "Gap (%)"]
+    add_table_title(
+        doc,
+        "Table 3\n"
+        "Median Annual Earnings by Demographic Group Among Surveyors, "
+        "ACS 2020\u20132024"
+    )
 
-    # Core earnings for surveyors
-    rows_data = []
+    # Build row data from wage_gaps and earnings_core
+    # Filter to Surveyors, annual wage measure only
+    sv_gaps = None
+    if gaps_df is not None:
+        sv_gaps = gaps_df[
+            (gaps_df["occupation"] == "Surveyors") &
+            (gaps_df["measure"] == "wage_adj")
+        ].copy()
 
-    # Overall surveyor annual
-    if earnings_core is not None:
-        surv_annual = earnings_core[
-            (earnings_core["measure"] == "wage_adj") &
-            (earnings_core["group"].str.contains("Surveyors", na=False))
-        ]
-        if len(surv_annual) > 0:
-            r = surv_annual.iloc[0]
-            ci_str = fmt_ci(r["median"], r["ci_lower"], r["ci_upper"])
-            rows_data.append(("All surveyors", ci_str, fmt_n(r["unweighted_n"]), "—", "—"))
+    # Build table rows: (label, median, ci_lower, ci_upper, n, gap_dollars, gap_pct, suppressed)
+    table_rows = []
 
-    # Gender gap
-    if wage_gaps is not None:
-        gender = wage_gaps[
-            (wage_gaps["comparison"].str.contains("Gender", na=False)) &
-            (wage_gaps["occupation"] == "Surveyors")
-        ]
-        if len(gender) > 0:
-            rows_data.append(("Gender", "", "", "", ""))
-            g = gender.iloc[0]
-            if not g["suppressed"]:
-                rows_data.append((
-                    f"  Male",
-                    fmt_ci(g["group_a_median"], None, None),
-                    fmt_n(g["group_a_n"]),
-                    "ref.", "ref."
+    # --- Gender section ---
+    table_rows.append(("Gender", None, None, None, None, None, None, True))
+
+    if sv_gaps is not None:
+        gender_row = sv_gaps[sv_gaps["comparison"].str.contains("Gender")]
+        if len(gender_row) > 0:
+            gr = gender_row.iloc[0]
+            # Male (reference)
+            if not pd.isna(gr["group_a_median"]):
+                ci_half = 1.96 * gr["group_a_se"] if not pd.isna(gr["group_a_se"]) else 0
+                table_rows.append((
+                    "  Male (ref.)",
+                    gr["group_a_median"],
+                    gr["group_a_median"] - ci_half,
+                    gr["group_a_median"] + ci_half,
+                    gr["group_a_n"],
+                    EM_DASH,
+                    EM_DASH,
+                    False,
                 ))
-                rows_data.append((
-                    f"  Female",
-                    fmt_ci(g["group_b_median"], None, None),
-                    fmt_n(g["group_b_n"]),
-                    fmt_dollar(g["gap_dollars"]),
-                    f"{g['gap_pct']:.1f}%"
+            # Female
+            if gr.get("suppressed", False):
+                table_rows.append(("  Female", None, None, None, None, None, None, True))
+            else:
+                ci_half_b = 1.96 * gr["group_b_se"] if not pd.isna(gr["group_b_se"]) else 0
+                table_rows.append((
+                    "  Female",
+                    gr["group_b_median"],
+                    gr["group_b_median"] - ci_half_b,
+                    gr["group_b_median"] + ci_half_b,
+                    gr["group_b_n"],
+                    gr["gap_dollars"],
+                    gr["gap_pct"],
+                    False,
                 ))
 
-        # Racial gaps
-        racial = wage_gaps[
-            (wage_gaps["comparison"].str.contains("Race", na=False)) &
-            (wage_gaps["occupation"] == "Surveyors")
+    # --- Race/ethnicity section ---
+    table_rows.append(("Race/Ethnicity", None, None, None, None, None, None, True))
+
+    race_order = ["NH White", "NH Black", "Hispanic", "NH Asian", "NH Other"]
+    if sv_gaps is not None:
+        # NH White reference
+        white_row = sv_gaps[
+            sv_gaps["comparison"].str.contains("Race") &
+            (sv_gaps["group_a"] == "NH White")
         ]
-        if len(racial) > 0:
-            rows_data.append(("Race/Ethnicity", "", "", "", ""))
-            # Add NH White as reference
-            first = racial.iloc[0]
-            rows_data.append((
-                "  NH White",
-                fmt_ci(first["group_a_median"], None, None),
-                fmt_n(first["group_a_n"]),
-                "ref.", "ref."
+        if len(white_row) > 0:
+            wr = white_row.iloc[0]
+            ci_half = 1.96 * wr["group_a_se"] if not pd.isna(wr["group_a_se"]) else 0
+            table_rows.append((
+                "  NH White (ref.)",
+                wr["group_a_median"],
+                wr["group_a_median"] - ci_half,
+                wr["group_a_median"] + ci_half,
+                wr["group_a_n"],
+                EM_DASH,
+                EM_DASH,
+                False,
             ))
 
-            for _, r in racial.iterrows():
-                if r["suppressed"]:
-                    rows_data.append((
-                        f"  {r['group_b']}",
-                        "— [suppressed]",
-                        fmt_n(r["group_b_n"]),
-                        "—", "—"
-                    ))
+        for race in race_order:
+            if race == "NH White":
+                continue
+            race_gaps = sv_gaps[
+                sv_gaps["comparison"].str.contains("Race") &
+                (sv_gaps["group_b"] == race)
+            ]
+            if len(race_gaps) > 0:
+                rg = race_gaps.iloc[0]
+                if rg.get("suppressed", False):
+                    table_rows.append((f"  {race}", None, None, None,
+                                       rg["group_b_n"], None, None, True))
                 else:
-                    rows_data.append((
-                        f"  {r['group_b']}",
-                        fmt_ci(r["group_b_median"], None, None),
-                        fmt_n(r["group_b_n"]),
-                        fmt_dollar(r["gap_dollars"]),
-                        f"{r['gap_pct']:.1f}%"
+                    ci_half_b = 1.96 * rg["group_b_se"] if not pd.isna(rg["group_b_se"]) else 0
+                    table_rows.append((
+                        f"  {race}",
+                        rg["group_b_median"],
+                        rg["group_b_median"] - ci_half_b,
+                        rg["group_b_median"] + ci_half_b,
+                        rg["group_b_n"],
+                        rg["gap_dollars"],
+                        rg["gap_pct"],
+                        False,
                     ))
 
-        # Veteran
-        veteran = wage_gaps[wage_gaps["comparison"].str.contains("Veteran", na=False)]
-        if len(veteran) > 0:
-            rows_data.append(("Veteran Status", "", "", "", ""))
-            for _, r in veteran.iterrows():
-                rows_data.append((
-                    f"  {r['group_a']}",
-                    fmt_ci(r["group_a_median"], None, None),
-                    fmt_n(r["group_a_n"]),
-                    "—", "—"
-                ))
+    # --- Veteran section ---
+    table_rows.append(("Veteran Status", None, None, None, None, None, None, True))
 
-    n_rows = len(rows_data) + 1
-    table = doc.add_table(rows=n_rows, cols=len(headers))
+    if sv_gaps is not None:
+        for vet_label in ["Non-veteran", "Veteran"]:
+            vet_rows = sv_gaps[
+                sv_gaps["comparison"].str.contains("Veteran") &
+                (sv_gaps["group_a"] == vet_label)
+            ]
+            if len(vet_rows) > 0:
+                vr = vet_rows.iloc[0]
+                if not pd.isna(vr["group_a_median"]):
+                    ci_half = 1.96 * vr["group_a_se"] if not pd.isna(vr["group_a_se"]) else 0
+                    table_rows.append((
+                        f"  {vet_label}",
+                        vr["group_a_median"],
+                        vr["group_a_median"] - ci_half,
+                        vr["group_a_median"] + ci_half,
+                        vr["group_a_n"],
+                        EM_DASH,
+                        EM_DASH,
+                        False,
+                    ))
+
+    # Create the docx table
+    num_cols = 5
+    num_rows = 1 + len(table_rows)
+    table = doc.add_table(rows=num_rows, cols=num_cols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
 
-    for j, h in enumerate(headers):
+    # Header
+    col_headers = ["Group", "Median Earnings (95% CI)", "n",
+                   "Gap vs. Ref. ($)", "Gap (%)"]
+    for j, h in enumerate(col_headers):
         align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-        set_cell_font(table.rows[0].cells[j], h, bold=True, alignment=align)
+        set_cell_text(table.rows[0].cells[j], h, bold=True, alignment=align)
 
-    for i, row_data in enumerate(rows_data):
-        is_section = row_data[0] in ("Gender", "Race/Ethnicity", "Veteran Status")
-        for j, val in enumerate(row_data):
-            align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-            set_cell_font(table.rows[i + 1].cells[j], val, bold=is_section, alignment=align)
+    for i, (label, median, ci_lo, ci_hi, n, gap_d, gap_p, is_header) in enumerate(table_rows):
+        row = table.rows[i + 1]
+        if is_header and median is None:
+            # Section header -- merge and bold
+            for ci in range(1, num_cols):
+                row.cells[0].merge(row.cells[ci])
+            set_cell_text(row.cells[0], label, bold=True)
+        else:
+            set_cell_text(row.cells[0], label)
+            set_cell_text(row.cells[1], fmt_ci_dollars(median, ci_lo, ci_hi),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            n_str = EM_DASH
+            if n is not None:
+                if isinstance(n, (int, float)) and not pd.isna(n):
+                    n_str = fmt_int(n)
+                elif isinstance(n, str):
+                    n_str = n
+            set_cell_text(row.cells[2], n_str,
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    apa_table_lines(table)
+            # Gap columns
+            if isinstance(gap_d, str):
+                set_cell_text(row.cells[3], gap_d,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                set_cell_text(row.cells[3], fmt_dollars(gap_d),
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    add_table_note(doc,
-        "Weighted median annual earnings in 2024 dollars (CPI-U adjusted). "
-        "95% confidence intervals computed via BRR Woodruff method (Fay k = 0.5). "
-        "Gap = reference group median − comparison group median. "
-        "Cells with n < 50 are suppressed. "
-        "Data: ACS 2020–2024 5-year IPUMS microdata.")
+            if isinstance(gap_p, str):
+                set_cell_text(row.cells[4], gap_p,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                gap_p_str = fmt_pct(gap_p) if not pd.isna(gap_p) else EM_DASH
+                set_cell_text(row.cells[4], gap_p_str,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    doc.add_page_break()
+    apply_apa_borders(table, header_row_count=1)
+
+    add_table_note(
+        doc,
+        "Weighted median annual earnings (inflation-adjusted to 2024 $) with "
+        "95% confidence intervals from BRR standard errors (Woodruff method). "
+        "Gap computed as reference group median minus comparison group median. "
+        "Cells with unweighted n < 50 are suppressed (\u2014). "
+        "Data source: IPUMS ACS 2020\u20132024."
+    )
+
+    print("    Table 3 complete.")
+    return True
 
 
-def build_table4(doc, regression):
-    """Table 4: OLS Regression Results."""
-    add_table_title(doc, 4, "OLS Regression of Log Hourly Wage, Surveyors (OCC 1310)")
+# ---------------------------------------------------------------------------
+# Table 4: OLS Regression Results -- Log Hourly Wage
+# ---------------------------------------------------------------------------
+def build_table4(doc, reg_df):
+    """
+    Standard regression table: Variable | B | SE | t | p | Interpretation
+    Note about state fixed effects, HC1 robust SE.
+    """
+    print("\n  Building Table 4: OLS Regression Results...")
 
-    headers = ["Variable", "Coefficient", "SE", "t", "p"]
+    add_table_title(
+        doc,
+        "Table 4\n"
+        "OLS Regression Results: Log Hourly Wage Among Surveyors, "
+        "ACS 2020\u20132024"
+    )
 
-    # Filter to coefficient rows (not model summary)
-    coef_rows = regression[regression["variable"].notna()].copy()
-    # Separate model summary row
-    summary = regression[regression["variable"].isna() | (regression["variable"] == "")]
+    # Separate model summary from coefficients
+    summary_row = reg_df[reg_df["variable"] == "MODEL_SUMMARY"]
+    coef_df = reg_df[reg_df["variable"] != "MODEL_SUMMARY"].copy()
 
-    rows_data = []
-    for _, r in coef_rows.iterrows():
-        var_name = r.get("variable", "")
-        if pd.isna(var_name) or var_name == "":
+    # Filter to key variable groups (exclude state FE rows for display)
+    display_groups = ["other", "race_eth", "sex_r", "educ_r", "agegroup",
+                      "veteran", "classwkr"]
+    display_df = coef_df[coef_df["group"].isin(display_groups)].copy()
+
+    # Friendly variable names
+    name_map = {
+        "const": "Intercept",
+    }
+    # Build dynamic name map from actual variable names
+    for _, row in display_df.iterrows():
+        var = row["variable"]
+        if var.startswith("race_eth_"):
+            name_map[var] = var.replace("race_eth_", "Race: ")
+        elif var.startswith("sex_r_"):
+            name_map[var] = var.replace("sex_r_", "Sex: ")
+        elif var.startswith("educ_r_"):
+            name_map[var] = var.replace("educ_r_", "Education: ")
+        elif var.startswith("agegroup_"):
+            name_map[var] = var.replace("agegroup_", "Age: ")
+        elif var.startswith("veteran_"):
+            name_map[var] = var.replace("veteran_", "Veteran: ")
+        elif var.startswith("classwkr_"):
+            name_map[var] = var.replace("classwkr_", "Class of worker: ")
+
+    # Variable group ordering
+    group_order = ["other", "sex_r", "race_eth", "educ_r", "agegroup",
+                   "veteran", "classwkr"]
+    group_labels = {
+        "other": None,
+        "sex_r": "Sex (ref: Male)",
+        "race_eth": "Race/Ethnicity (ref: NH White)",
+        "educ_r": "Education (ref: HS or less)",
+        "agegroup": "Age Group (ref: 25\u201334)",
+        "veteran": "Veteran Status (ref: Non-veteran)",
+        "classwkr": "Class of Worker (ref: Private wage/salary)",
+    }
+
+    # Build ordered list of display rows
+    ordered_rows = []
+    for grp in group_order:
+        grp_rows = display_df[display_df["group"] == grp]
+        if len(grp_rows) == 0:
             continue
-        coef = f"{r['coefficient']:.4f}" if not pd.isna(r.get("coefficient")) else "—"
-        se = f"{r['se']:.4f}" if not pd.isna(r.get("se")) else "—"
-        t_val = f"{r['t_stat']:.2f}" if not pd.isna(r.get("t_stat")) else "—"
-        p_val = fmt_pval(r.get("p_value")) if not pd.isna(r.get("p_value")) else "—"
-        rows_data.append((var_name, coef, se, t_val, p_val))
+        label = group_labels.get(grp)
+        if label:
+            ordered_rows.append(("SECTION", label, None))
+        for _, r in grp_rows.iterrows():
+            display_name = name_map.get(r["variable"], r["variable"])
+            ordered_rows.append(("DATA", display_name, r))
 
-    n_rows = len(rows_data) + 1
-    table = doc.add_table(rows=n_rows, cols=len(headers))
+    # Add state FE indicator row
+    n_state_fe = len(coef_df[coef_df["group"] == "state_fe"])
+
+    num_cols = 6
+    num_data_rows = len(ordered_rows) + 1 + 1  # +1 header, +1 state FE indicator
+    # Add model summary rows
+    has_summary = len(summary_row) > 0
+    if has_summary:
+        num_data_rows += 3  # R2, Adj R2, N
+
+    table = doc.add_table(rows=num_data_rows, cols=num_cols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
 
+    # Header
+    headers = ["Variable", "B", "SE", "t", "p", "% Wage Effect"]
     for j, h in enumerate(headers):
         align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-        set_cell_font(table.rows[0].cells[j], h, bold=True, alignment=align)
+        set_cell_text(table.rows[0].cells[j], h, bold=True, alignment=align)
 
-    for i, row_data in enumerate(rows_data):
-        for j, val in enumerate(row_data):
-            align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-            set_cell_font(table.rows[i + 1].cells[j], val, alignment=align)
+    row_idx = 1
+    for row_type, label, data in ordered_rows:
+        row = table.rows[row_idx]
+        if row_type == "SECTION":
+            for ci in range(1, num_cols):
+                row.cells[0].merge(row.cells[ci])
+            set_cell_text(row.cells[0], label, bold=True)
+        else:
+            set_cell_text(row.cells[0], f"  {label}")
+            set_cell_text(row.cells[1], fmt_coef(data["coefficient"]),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_text(row.cells[2], fmt_coef(data["se"]),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            t_val = data.get("t_stat", None)
+            set_cell_text(row.cells[3], fmt_coef(t_val, 2),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    apa_table_lines(table)
+            p_val = data["p_value"]
+            stars = sig_stars(p_val)
+            p_str = fmt_coef(p_val, 3) + stars if not pd.isna(p_val) else EM_DASH
+            set_cell_text(row.cells[4], p_str,
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    # Model summary note
-    note_parts = ["Dependent variable: log(hourly wage). HC1 robust standard errors. "
-                  "State fixed effects (STATEFIP) included but not shown."]
-    if len(summary) > 0:
-        s = summary.iloc[0]
-        if not pd.isna(s.get("r_squared")):
-            note_parts.append(f"R² = {s['r_squared']:.3f}.")
-        if not pd.isna(s.get("n_obs")):
-            note_parts.append(f"N = {s['n_obs']:,.0f}.")
+            # Percentage wage effect = (exp(B) - 1) * 100
+            coeff = data["coefficient"]
+            if not pd.isna(coeff) and data["variable"] != "const":
+                pct_effect = (np.exp(coeff) - 1) * 100
+                set_cell_text(row.cells[5],
+                              f"{pct_effect:+.1f}%",
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            else:
+                set_cell_text(row.cells[5], EM_DASH,
+                              alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        row_idx += 1
 
-    note_parts.append("***p < .001, **p < .01, *p < .05.")
-    add_table_note(doc, " ".join(note_parts))
+    # State FE indicator row
+    row = table.rows[row_idx]
+    set_cell_text(row.cells[0], "State fixed effects")
+    for ci in range(1, num_cols - 1):
+        set_cell_text(row.cells[ci], "", alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    indicator = f"Yes ({n_state_fe})" if n_state_fe > 0 else "No"
+    set_cell_text(row.cells[num_cols - 1], indicator,
+                  alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    row_idx += 1
 
-    doc.add_page_break()
+    # Model summary rows
+    if has_summary:
+        sm = summary_row.iloc[0]
+        for stat_label, stat_val, fmt_func in [
+            ("R\u00b2", sm.get("r_squared"), lambda v: f"{v:.4f}"),
+            ("Adjusted R\u00b2", sm.get("adj_r_squared"), lambda v: f"{v:.4f}"),
+            ("N", sm.get("n_obs"), lambda v: f"{int(v):,}"),
+        ]:
+            row = table.rows[row_idx]
+            set_cell_text(row.cells[0], stat_label, bold=True)
+            for ci in range(1, num_cols - 1):
+                set_cell_text(row.cells[ci], "", alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            val_str = fmt_func(stat_val) if not pd.isna(stat_val) else EM_DASH
+            set_cell_text(row.cells[num_cols - 1], val_str,
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            row_idx += 1
+
+    apply_apa_borders(table, header_row_count=1)
+
+    add_table_note(
+        doc,
+        "Dependent variable: log(hourly wage). Estimated via OLS with "
+        "heteroscedasticity-consistent (HC1) robust standard errors. "
+        "Reference categories: Male, NH White, HS or less, age 25\u201334, "
+        "Non-veteran, Private wage/salary. "
+        "% Wage Effect = (exp(B) \u2212 1) \u00d7 100. "
+        "***p < .001, **p < .01, *p < .05."
+    )
+
+    print("    Table 4 complete.")
+    return True
 
 
-def build_table5(doc, state_comp, metro):
-    """Table 5: Geographic Variation."""
-    add_table_title(doc, 5, "Geographic Variation in Surveyor Demographics, Top States by Employment")
+# ---------------------------------------------------------------------------
+# Table 5: Geographic Variation in Surveyor Demographics (Top 10 States)
+# ---------------------------------------------------------------------------
+def build_table5(doc, state_df, metro_df):
+    """
+    Columns: State | N | % Non-White | % Female | Median Wage
+    Include metro vs non-metro summary row.
+    """
+    print("\n  Building Table 5: Geographic Variation...")
 
+    add_table_title(
+        doc,
+        "Table 5\n"
+        "Geographic Variation in Surveyor Demographics: Top 10 States "
+        "by Workforce Size, ACS 2020\u20132024"
+    )
+
+    # Get top 10 states by weighted_n
+    top10 = state_df.nlargest(10, "weighted_n").copy()
+
+    # Build table: header + 10 states + separator + metro rows
+    metro_rows_data = []
+    if metro_df is not None and len(metro_df) > 0:
+        for _, mr in metro_df.iterrows():
+            metro_rows_data.append(mr)
+
+    num_cols = 5
+    num_rows = 1 + len(top10) + len(metro_rows_data)  # header + states + metro
+    if len(metro_rows_data) > 0:
+        num_rows += 1  # separator / section label row
+
+    table = doc.add_table(rows=num_rows, cols=num_cols)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
+
+    # Header
     headers = ["State", "N (weighted)", "% Non-White", "% Female", "Median Wage"]
-
-    # Sort by weighted_n, take top 10
-    top = state_comp.nlargest(10, "weighted_n") if len(state_comp) > 10 else state_comp
-
-    rows_data = []
-    for _, r in top.iterrows():
-        state = r.get("state_name", r.get("state", ""))
-        n = fmt_n(r.get("weighted_n", np.nan))
-        nw = fmt_pct(r.get("pct_nonwhite", np.nan))
-        fem = fmt_pct(r.get("pct_female", np.nan))
-        wage = fmt_dollar(r.get("median_wage_adj", np.nan))
-        rows_data.append((state, n, nw, fem, wage))
-
-    # Add metro/non-metro summary if available
-    if metro is not None and len(metro) > 0:
-        rows_data.append(("", "", "", "", ""))
-        for _, r in metro.iterrows():
-            label = r.get("metro_status", "")
-            n = fmt_n(r.get("weighted_n", np.nan))
-            nw = fmt_pct(r.get("pct_nonwhite", np.nan))
-            fem = fmt_pct(r.get("pct_female", np.nan))
-            wage = fmt_dollar(r.get("median_wage_adj", np.nan))
-            rows_data.append((label, n, nw, fem, wage))
-
-    n_rows = len(rows_data) + 1
-    table = doc.add_table(rows=n_rows, cols=len(headers))
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
     for j, h in enumerate(headers):
         align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-        set_cell_font(table.rows[0].cells[j], h, bold=True, alignment=align)
+        set_cell_text(table.rows[0].cells[j], h, bold=True, alignment=align)
 
-    for i, row_data in enumerate(rows_data):
-        for j, val in enumerate(row_data):
-            align = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
-            set_cell_font(table.rows[i + 1].cells[j], val, alignment=align)
+    row_idx = 1
+    for _, st in top10.iterrows():
+        row = table.rows[row_idx]
+        set_cell_text(row.cells[0], st["state_name"])
+        set_cell_text(row.cells[1], fmt_int(st["weighted_n"]),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_text(row.cells[2], fmt_pct(st.get("pct_nonwhite", np.nan)),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_text(row.cells[3], fmt_pct(st.get("pct_female", np.nan)),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        set_cell_text(row.cells[4], fmt_dollars(st.get("median_wage_adj", np.nan)),
+                      alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        row_idx += 1
 
-    apa_table_lines(table)
+    # Metro / non-metro section
+    if len(metro_rows_data) > 0:
+        # Section label
+        row = table.rows[row_idx]
+        for ci in range(1, num_cols):
+            row.cells[0].merge(row.cells[ci])
+        set_cell_text(row.cells[0], "Metro Status", bold=True)
+        set_row_border_bottom(table.rows[row_idx], sz="2", color="666666")
+        row_idx += 1
 
-    add_table_note(doc,
-        "Top 10 states by weighted surveyor employment. States with unweighted n < 30 "
-        "are suppressed. Median wage in 2024 dollars. Metro/non-metro classification "
-        "based on IPUMS METRO variable. Data: ACS 2020–2024 5-year IPUMS microdata.")
+        for mr in metro_rows_data:
+            row = table.rows[row_idx]
+            set_cell_text(row.cells[0], f"  {mr['metro_status']}")
+            set_cell_text(row.cells[1], fmt_int(mr.get("weighted_n", np.nan)),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_text(row.cells[2], fmt_pct(mr.get("pct_nonwhite", np.nan)),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_text(row.cells[3], fmt_pct(mr.get("pct_female", np.nan)),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_text(row.cells[4], fmt_dollars(mr.get("median_wage_adj", np.nan)),
+                          alignment=WD_ALIGN_PARAGRAPH.CENTER)
+            row_idx += 1
+
+    apply_apa_borders(table, header_row_count=1)
+
+    add_table_note(
+        doc,
+        "States ranked by estimated surveyor workforce size (weighted N). "
+        "Median wages inflation-adjusted to 2024 $. "
+        "States with unweighted n < 30 are excluded. "
+        "Metro status classification follows IPUMS METRO variable. "
+        "Data source: IPUMS ACS 2020\u20132024."
+    )
+
+    print("    Table 5 complete.")
+    return True
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Subagent 5B: TABLE_BUILD — Paper 2")
-    parser.add_argument("--indir", default="analysis/p2",
-                        help="Input directory with analysis CSVs")
-    parser.add_argument("--outdir", default="tables/p2",
-                        help="Output directory for .docx tables")
+    parser = argparse.ArgumentParser(
+        description="Subagent 5B: Publication-ready APA 7 tables for Paper 2 "
+                    "(Demographic Disparity and Earnings Gaps)"
+    )
+    parser.add_argument(
+        "--indir", default="analysis/p2",
+        help="Directory containing Paper 2 analysis CSVs (default: analysis/p2)",
+    )
+    parser.add_argument(
+        "--outdir", default="tables/p2",
+        help="Output directory for .docx tables (default: tables/p2)",
+    )
     args = parser.parse_args()
 
     indir = Path(args.indir)
     outdir = Path(args.outdir)
-    outdir.mkdir(parents=True, exist_ok=True)
 
     if not indir.exists():
-        print(f"ERROR: Input directory not found: {indir}")
-        print("Run s4b, s4c, s4d analysis scripts first.")
+        print(f"ERROR: Input directory does not exist: {indir}")
+        print("Run s4b_disparity_analysis.py and s4c_earnings_analysis.py first.")
         sys.exit(1)
 
-    print(f"Loading Paper 2 analysis from: {indir}")
+    outdir.mkdir(parents=True, exist_ok=True)
 
-    # Load all CSVs
-    composition = load_csv(indir / "p2_composition.csv")
-    chi2_df = load_csv(indir / "p2_composition_chi2.csv")
-    ratios = load_csv(indir / "p2_representation_ratios.csv")
-    earnings_core = load_csv(indir / "p2_earnings_core.csv")
-    wage_gaps = load_csv(indir / "p2_wage_gaps.csv")
-    regression = load_csv(indir / "p2_wage_regression.csv")
-    state_comp = load_csv(indir / "p2_state_composition.csv")
-    metro = load_csv(indir / "p2_metro_nonmetro.csv")
+    print("=" * 65)
+    print("PAPER 2: APA 7 TABLE GENERATION")
+    print("=" * 65)
+    print(f"  Input directory:  {indir}")
+    print(f"  Output directory: {outdir}")
 
-    tables_built = 0
+    # ------------------------------------------------------------------
+    # Load all required CSVs
+    # ------------------------------------------------------------------
+    print("\nLoading analysis CSVs...")
+
+    comp_df = load_csv_safe(indir / "p2_composition.csv")
+    chi2_df = load_csv_safe(indir / "p2_composition_chi2.csv")
+    ratios_df = load_csv_safe(indir / "p2_representation_ratios.csv")
+    earnings_df = load_csv_safe(indir / "p2_earnings_core.csv")
+    gaps_df = load_csv_safe(indir / "p2_wage_gaps.csv")
+    reg_df = load_csv_safe(indir / "p2_wage_regression.csv")
+    state_df = load_csv_safe(indir / "p2_state_composition.csv")
+    metro_df = load_csv_safe(indir / "p2_metro_nonmetro.csv")
+
+    # ------------------------------------------------------------------
+    # Generate tables
+    # ------------------------------------------------------------------
+    n_produced = 0
 
     # Table 1: Demographic Composition
-    if composition is not None:
-        doc = Document()
-        build_table1(doc, composition, chi2_df)
-        out = outdir / "Table1_Composition.docx"
-        doc.save(out)
-        print(f"  Table 1 saved: {out}")
-        tables_built += 1
+    if comp_df is not None:
+        try:
+            doc = create_apa_document()
+            if build_table1(doc, comp_df, chi2_df):
+                outpath = outdir / "table1_demographic_composition.docx"
+                doc.save(str(outpath))
+                print(f"    -> {outpath}")
+                n_produced += 1
+        except Exception as e:
+            print(f"    ERROR building Table 1: {e}")
 
     # Table 2: Representation Ratios
-    if ratios is not None:
-        doc = Document()
-        build_table2(doc, ratios)
-        out = outdir / "Table2_Representation.docx"
-        doc.save(out)
-        print(f"  Table 2 saved: {out}")
-        tables_built += 1
+    if ratios_df is not None:
+        try:
+            doc = create_apa_document()
+            if build_table2(doc, ratios_df):
+                outpath = outdir / "table2_representation_ratios.docx"
+                doc.save(str(outpath))
+                print(f"    -> {outpath}")
+                n_produced += 1
+        except Exception as e:
+            print(f"    ERROR building Table 2: {e}")
 
-    # Table 3: Earnings and Wage Gaps
-    if wage_gaps is not None:
-        doc = Document()
-        build_table3(doc, wage_gaps, earnings_core)
-        out = outdir / "Table3_Earnings.docx"
-        doc.save(out)
-        print(f"  Table 3 saved: {out}")
-        tables_built += 1
+    # Table 3: Earnings
+    if gaps_df is not None:
+        try:
+            doc = create_apa_document()
+            if build_table3(doc, earnings_df, gaps_df):
+                outpath = outdir / "table3_earnings.docx"
+                doc.save(str(outpath))
+                print(f"    -> {outpath}")
+                n_produced += 1
+        except Exception as e:
+            print(f"    ERROR building Table 3: {e}")
 
     # Table 4: Regression
-    if regression is not None:
-        doc = Document()
-        build_table4(doc, regression)
-        out = outdir / "Table4_Regression.docx"
-        doc.save(out)
-        print(f"  Table 4 saved: {out}")
-        tables_built += 1
+    if reg_df is not None and len(reg_df) > 0:
+        try:
+            doc = create_apa_document()
+            if build_table4(doc, reg_df):
+                outpath = outdir / "table4_regression.docx"
+                doc.save(str(outpath))
+                print(f"    -> {outpath}")
+                n_produced += 1
+        except Exception as e:
+            print(f"    ERROR building Table 4: {e}")
 
     # Table 5: Geographic
-    if state_comp is not None:
-        doc = Document()
-        build_table5(doc, state_comp, metro)
-        out = outdir / "Table5_Geographic.docx"
-        doc.save(out)
-        print(f"  Table 5 saved: {out}")
-        tables_built += 1
+    if state_df is not None and len(state_df) > 0:
+        try:
+            doc = create_apa_document()
+            if build_table5(doc, state_df, metro_df):
+                outpath = outdir / "table5_geographic.docx"
+                doc.save(str(outpath))
+                print(f"    -> {outpath}")
+                n_produced += 1
+        except Exception as e:
+            print(f"    ERROR building Table 5: {e}")
 
-    print(f"\nDone. {tables_built} tables saved to {outdir}/")
+    # ------------------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------------------
+    print("\n" + "=" * 65)
+    print("PAPER 2 TABLE GENERATION COMPLETE")
+    print("=" * 65)
+    print(f"  {n_produced} table(s) produced in: {outdir}")
+    if n_produced > 0:
+        for f in sorted(outdir.glob("table*.docx")):
+            size_kb = f.stat().st_size / 1024
+            print(f"    {f.name}  ({size_kb:.1f} KB)")
+    else:
+        print("  No tables were produced. Ensure analysis CSVs exist in "
+              f"{indir}.")
+        print("  Run s4b_disparity_analysis.py, s4c_earnings_analysis.py, "
+              "and s4d_geographic_analysis.py first.")
 
 
 if __name__ == "__main__":
