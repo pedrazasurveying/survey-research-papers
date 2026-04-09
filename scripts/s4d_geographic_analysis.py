@@ -146,10 +146,10 @@ def compute_state_composition(state_df, state_name, statefip):
 # Analysis functions
 # ---------------------------------------------------------------------------
 def analyze_state_composition(df):
-    """State-level demographic composition for OCC=1530."""
-    print("\n[1/3] Computing state-level composition (OCC=1530)...")
+    """State-level demographic composition for OCC=1310."""
+    print("\n[1/3] Computing state-level composition (OCC=1310)...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     if "STATEFIP" not in surveyors.columns:
         print("  ERROR: STATEFIP not found in data. Cannot do state analysis.")
@@ -211,7 +211,7 @@ def analyze_texas_detail(df):
     """Detailed Texas breakdown for trade publications."""
     print("\n[2/3] Computing Texas detailed breakdown...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     if "STATEFIP" not in surveyors.columns:
         print("  ERROR: STATEFIP not found in data.")
@@ -322,10 +322,10 @@ def analyze_texas_detail(df):
 
 
 def analyze_metro_nonmetro(df):
-    """Metro vs non-metro demographic breakdown for OCC=1530."""
+    """Metro vs non-metro demographic breakdown for OCC=1310."""
     print("\n[3/3] Computing metro vs non-metro breakdown...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     if "METRO" not in surveyors.columns:
         print("  ERROR: METRO not found in data. Cannot do metro analysis.")
@@ -451,7 +451,7 @@ def main():
     print(f"  METRO present: {has_metro}")
 
     if has_statefip:
-        n_states = df[df["OCC"] == 1530]["STATEFIP"].nunique()
+        n_states = df[df["OCC"] == 1310]["STATEFIP"].nunique()
         print(f"  Surveyors in {n_states} states")
 
     print("\n" + "=" * 70)

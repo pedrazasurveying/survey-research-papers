@@ -4,8 +4,8 @@ Subagent 4A: AGING_ANALYSIS
 Produce all age-distribution, retirement-cliff, and geographic-aging tables
 for Paper 1 (Workforce Aging and Contraction).
 
-Reads person-level ACS microdata (OCC 1530 Surveyors, 1560 Technicians,
-1520 Cartographers) already recoded by s2_recode.py, along with
+Reads person-level ACS microdata (OCC 1310 Surveyors, 1560 Technicians,
+1310 includes cartographers) already recoded by s2_recode.py, along with
 workforce-wide benchmarks built by s3_benchmark_build.py.
 
 Variance estimation uses Fay's BRR with k = 0.5 and the 80 ACS replicate
@@ -179,8 +179,7 @@ def build_age_distribution_table(df, benchmarks_df):
     rows = []
 
     # Micro-data groups with BRR SE
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Survey technicians"),
-                            (1520, "Cartographers")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Survey technicians")]:
         sub = df[df["OCC"] == occ_code]
         if len(sub) == 0:
             print(f"  WARNING: No records for OCC={occ_code} ({label})")
@@ -220,10 +219,10 @@ def build_age_distribution_table(df, benchmarks_df):
 
 
 def build_retirement_cliff(df):
-    """Requirement 2: Retirement cliff projection for OCC=1530."""
-    surveyors = df[df["OCC"] == 1530].copy()
+    """Requirement 2: Retirement cliff projection for OCC=1310."""
+    surveyors = df[df["OCC"] == 1310].copy()
     if len(surveyors) == 0:
-        print("  WARNING: No OCC=1530 records for retirement cliff.")
+        print("  WARNING: No OCC=1310 records for retirement cliff.")
         return pd.DataFrame()
 
     wt = surveyors["PERWT"]
@@ -369,10 +368,10 @@ def build_retirement_cliff(df):
 
 
 def build_geographic_aging(df):
-    """Requirement 3: State-level aging analysis for OCC=1530."""
-    surveyors = df[df["OCC"] == 1530].copy()
+    """Requirement 3: State-level aging analysis for OCC=1310."""
+    surveyors = df[df["OCC"] == 1310].copy()
     if len(surveyors) == 0:
-        print("  WARNING: No OCC=1530 records for geographic analysis.")
+        print("  WARNING: No OCC=1310 records for geographic analysis.")
         return pd.DataFrame()
 
     if "STATEFIP" not in surveyors.columns:
@@ -480,8 +479,7 @@ def main():
     print(f"  {len(df):,} person records loaded.")
 
     # Quick data summary
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians"),
-                            (1520, "Cartographers")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         n = (df["OCC"] == occ_code).sum()
         print(f"  OCC {occ_code} ({label}): {n:,} unweighted")
 
@@ -529,7 +527,7 @@ def main():
     # 2. Retirement cliff projection
     # ------------------------------------------------------------------
     print("\n" + "=" * 65)
-    print("RETIREMENT CLIFF PROJECTION (OCC=1530 Surveyors)")
+    print("RETIREMENT CLIFF PROJECTION (OCC=1310 Surveyors)")
     print("=" * 65)
     cliff_table = build_retirement_cliff(df)
 
@@ -544,7 +542,7 @@ def main():
     # 3. Geographic variation
     # ------------------------------------------------------------------
     print("\n" + "=" * 65)
-    print("GEOGRAPHIC AGING (OCC=1530 Surveyors by state)")
+    print("GEOGRAPHIC AGING (OCC=1310 Surveyors by state)")
     print("=" * 65)
     geo_table = build_geographic_aging(df)
 

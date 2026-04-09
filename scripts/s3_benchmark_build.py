@@ -20,9 +20,8 @@ import pandas as pd
 
 # Benchmark group definitions by OCC code ranges
 BENCHMARK_GROUPS = {
-    "Surveyors": [1530],
+    "Surveyors": [1310],
     "Survey technicians": [1560],
-    "Cartographers": [1520],
     "All STEM": list(range(1000, 1981)) + list(range(2100, 2161)),
     "Architecture & engineering": list(range(1300, 1561)),
     "Construction trades": list(range(6200, 6766)),

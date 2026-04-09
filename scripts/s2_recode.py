@@ -150,8 +150,7 @@ def recode_classwkr(df: pd.DataFrame) -> pd.Series:
 def recode_occ_label(df: pd.DataFrame) -> pd.Series:
     """OCC code -> readable label."""
     return df["OCC"].map({
-        1520: "Cartographers",
-        1530: "Surveyors",
+        1310: "Surveyors",
         1560: "Technicians",
     })
 
@@ -269,12 +268,12 @@ def main():
 
     # Check for small groups that may need combining
     print("\nChecking cell sizes...")
-    for occ_code in [1530, 1560]:
+    for occ_code in [1310, 1560]:
         check_small_groups(df, "race_eth", occ_code)
         check_small_groups(df, "veteran", occ_code)
 
     # Check if NH AIAN and NH Other need combining
-    for occ_code in [1530, 1560]:
+    for occ_code in [1310, 1560]:
         subset = df[df["OCC"] == occ_code]
         aian_n = (subset["race_eth"] == "NH AIAN").sum()
         other_n = (subset["race_eth"] == "NH Other/Multiracial").sum()

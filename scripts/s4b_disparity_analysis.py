@@ -136,10 +136,10 @@ def rao_scott_chi2(df_a, df_b, var, label_a="Surveyors", label_b="Technicians"):
 # Main analysis functions
 # ---------------------------------------------------------------------------
 def analyze_composition(df, benchmarks):
-    """Weighted proportions by demographic variables for OCC=1530 and OCC=1560."""
+    """Weighted proportions by demographic variables for OCC=1310 and OCC=1560."""
     print("\n[1/7] Computing demographic composition...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
     technicians = df[df["OCC"] == 1560].copy()
 
     tables = []
@@ -170,7 +170,7 @@ def analyze_representation_ratios(df, benchmarks):
     """Compute representation ratios vs U.S. workforce benchmarks."""
     print("\n[2/7] Computing representation ratios...")
 
-    surveyors = df[df["OCC"] == 1530]
+    surveyors = df[df["OCC"] == 1310]
 
     # Get U.S. workforce benchmark row
     us_bench = benchmarks[benchmarks["group"] == "U.S. workforce"]
@@ -231,10 +231,10 @@ def analyze_representation_ratios(df, benchmarks):
 
 
 def analyze_intersectional(df):
-    """Race/ethnicity x sex cross-tab for OCC=1530. Suppress cells n < 50."""
+    """Race/ethnicity x sex cross-tab for OCC=1310. Suppress cells n < 50."""
     print("\n[3/7] Computing intersectional analysis (race x sex)...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
     total_wt = surveyors["PERWT"].sum()
 
     # Unweighted counts
@@ -275,10 +275,10 @@ def analyze_intersectional(df):
 
 
 def analyze_educ_by_race(df):
-    """Education pathway by race/ethnicity within OCC=1530."""
+    """Education pathway by race/ethnicity within OCC=1310."""
     print("\n[4/7] Computing education by race/ethnicity...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     rows = []
     for race in sorted(surveyors["race_eth"].unique()):
@@ -317,10 +317,10 @@ def analyze_educ_by_race(df):
 
 
 def analyze_age_by_race(df):
-    """Age distribution by race/ethnicity within OCC=1530."""
+    """Age distribution by race/ethnicity within OCC=1310."""
     print("\n[5/7] Computing age distribution by race/ethnicity...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     rows = []
     for race in sorted(surveyors["race_eth"].unique()):
@@ -382,7 +382,7 @@ def analyze_veteran(df, benchmarks):
     print("\n[6/7] Computing veteran representation...")
 
     rows = []
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         sub = df[df["OCC"] == occ_code]
         valid = sub[sub["veteran"].isin(["Veteran", "Non-veteran"])]
         if len(valid) == 0:
@@ -438,7 +438,7 @@ def analyze_self_employment(df):
     """Self-employment rates by race/ethnicity. Confirmed scope addition S8."""
     print("\n[7/7] Computing self-employment rates by race/ethnicity...")
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
     total_wt = surveyors["PERWT"].sum()
 
     rows = []
@@ -539,7 +539,7 @@ def main():
         print("  BRR standard errors may be inaccurate.")
 
     # Quick summary
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians"), (1520, "Cartographers")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         n = (df["OCC"] == occ_code).sum()
         print(f"  OCC {occ_code} ({label}): n={n:,}")
 

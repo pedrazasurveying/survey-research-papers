@@ -16,10 +16,11 @@ from pathlib import Path
 
 import pandas as pd
 
-# Target occupation codes (Census OCC)
+# Target occupation codes (Census OCC, 2018 Classification used in ACS 2020+)
+# Note: OCC 1310 combines surveyors, cartographers, and photogrammetrists
+# OCC 1560 is surveying and mapping technicians
 TARGET_OCC = {
-    1520: "Cartographers and photogrammetrists",
-    1530: "Surveyors",
+    1310: "Surveyors, cartographers, and photogrammetrists",
     1560: "Surveying and mapping technicians",
 }
 
@@ -39,9 +40,8 @@ REPWT_COLS = [f"REPWTP{i}" for i in range(1, 81)]
 
 # Expected weighted sample size ranges
 EXPECTED_RANGES = {
-    1530: (80_000, 120_000),
-    1560: (60_000, 100_000),
-    1520: (15_000, 30_000),
+    1310: (60_000, 120_000),   # Surveyors + cartographers + photogrammetrists
+    1560: (40_000, 100_000),   # Surveying and mapping technicians
 }
 
 

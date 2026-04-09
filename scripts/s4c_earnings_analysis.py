@@ -112,7 +112,7 @@ def analyze_core_earnings(df):
     print("\n[1/6] Computing core earnings by occupation...")
 
     rows = []
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians"), (1520, "Cartographers")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         sub = df[df["OCC"] == occ_code]
 
         # Annual wage
@@ -135,12 +135,12 @@ def analyze_core_earnings(df):
 
 
 def analyze_wage_gaps(df):
-    """Gender and racial wage gaps within OCC=1530 and OCC=1560."""
+    """Gender and racial wage gaps within OCC=1310 and OCC=1560."""
     print("\n[2/6] Computing wage gaps...")
 
     rows = []
 
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         sub = df[df["OCC"] == occ_code]
 
         # --- Gender wage gap ---
@@ -204,9 +204,9 @@ def analyze_wage_gaps(df):
                 "suppressed": True,
             })
 
-    # --- Racial wage gaps (OCC=1530 only, NH White as reference) ---
+    # --- Racial wage gaps (OCC=1310 only, NH White as reference) ---
     print(f"\n  Surveyors — Racial wage gaps (ref: NH White):")
-    surveyors = df[df["OCC"] == 1530]
+    surveyors = df[df["OCC"] == 1310]
     white_sub = surveyors[(surveyors["race_eth"] == "NH White") & surveyors["wage_adj"].notna()]
     white_med, white_se = brr_se_median(white_sub, "wage_adj")
     print(f"    NH White median: ${white_med:,.0f}")
@@ -266,7 +266,7 @@ def analyze_wage_gaps(df):
         })
         print(f"    {race}: ${race_med:,.0f} (gap=${gap_dollars:,.0f}, {gap_pct:.1f}%)")
 
-    # --- Veteran wage comparison (OCC=1530) ---
+    # --- Veteran wage comparison (OCC=1310) ---
     print(f"\n  Surveyors — Veteran wage comparison:")
     for vet_status in ["Veteran", "Non-veteran"]:
         vet_sub = surveyors[(surveyors["veteran"] == vet_status) & surveyors["wage_adj"].notna()]
@@ -296,7 +296,7 @@ def analyze_wage_gaps(df):
         else:
             print(f"    {vet_status}: n={n} < {MIN_CELL_N}, suppressed")
 
-    # --- Intersectional earnings (race x sex, OCC=1530) ---
+    # --- Intersectional earnings (race x sex, OCC=1310) ---
     print(f"\n  Surveyors — Intersectional earnings (race x sex):")
     for race in sorted(surveyors["race_eth"].unique()):
         for sex in ["Male", "Female"]:
@@ -331,7 +331,7 @@ def analyze_wage_gaps(df):
             else:
                 print(f"    {race} {sex}: n={n} < {MIN_CELL_N}, suppressed")
 
-    # --- Education-controlled comparison (BA/BS holders only, OCC=1530) ---
+    # --- Education-controlled comparison (BA/BS holders only, OCC=1310) ---
     print(f"\n  Surveyors — Education-controlled (BA/BS holders only):")
     ba_surveyors = surveyors[surveyors["educ_r"] == "BA or BS"]
 
@@ -398,14 +398,14 @@ def analyze_wage_gaps(df):
 
 def analyze_wage_regression(df):
     """
-    OLS regression of log(hourly_wage) on demographic predictors within OCC=1530.
+    OLS regression of log(hourly_wage) on demographic predictors within OCC=1310.
 
     Model: log(hourly_wage) ~ race_eth + sex_r + educ_r + agegroup + veteran
            + classwkr_r + STATEFIP (fixed effects)
 
     Uses statsmodels. Reports coefficients on race_eth and sex_r with SE and p-values.
     """
-    print("\n[3/6] Running OLS wage regression (OCC=1530)...")
+    print("\n[3/6] Running OLS wage regression (OCC=1310)...")
 
     try:
         import statsmodels.api as sm
@@ -414,7 +414,7 @@ def analyze_wage_regression(df):
         print("  ERROR: statsmodels not installed. Skipping regression.")
         return pd.DataFrame()
 
-    surveyors = df[df["OCC"] == 1530].copy()
+    surveyors = df[df["OCC"] == 1310].copy()
 
     # Filter to valid observations
     valid = surveyors[
@@ -638,7 +638,7 @@ def main():
         print(f"WARNING: Only {len(repwt_present)}/80 replicate weights found.")
 
     # Quick earnings summary
-    for occ_code, label in [(1530, "Surveyors"), (1560, "Technicians")]:
+    for occ_code, label in [(1310, "Surveyors"), (1560, "Technicians")]:
         sub = df[df["OCC"] == occ_code]
         valid_wage = sub["wage_adj"].notna().sum()
         print(f"  {label}: {valid_wage:,} valid wage observations")
