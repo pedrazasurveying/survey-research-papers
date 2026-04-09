@@ -54,25 +54,25 @@ SCRIPTS = [
     {
         "name": "S4A: AGING_ANALYSIS (Paper 1)",
         "script": "scripts/s4a_aging_analysis.py",
-        "args_template": "--input data/surveying_recoded.csv --benchmarks data/benchmarks.csv --output-dir analysis/p1/",
+        "args_template": "--input data/surveying_recoded.csv --benchmarks data/benchmarks.csv --outdir analysis/p1/",
         "needs_ipums": False,
     },
     {
         "name": "S4B: DISPARITY_ANALYSIS (Paper 2)",
         "script": "scripts/s4b_disparity_analysis.py",
-        "args_template": "--input data/surveying_recoded.csv --benchmarks data/benchmarks.csv --output-dir analysis/p2/",
+        "args_template": "--input data/surveying_recoded.csv --benchmarks data/benchmarks.csv --outdir analysis/p2/",
         "needs_ipums": False,
     },
     {
         "name": "S4C: EARNINGS_ANALYSIS (Paper 2)",
         "script": "scripts/s4c_earnings_analysis.py",
-        "args_template": "--input data/surveying_recoded.csv --output-dir analysis/p2/",
+        "args_template": "--input data/surveying_recoded.csv --outdir analysis/p2/",
         "needs_ipums": False,
     },
     {
         "name": "S4D: GEOGRAPHIC_ANALYSIS (Paper 2)",
         "script": "scripts/s4d_geographic_analysis.py",
-        "args_template": "--input data/surveying_recoded.csv --output-dir analysis/p2/",
+        "args_template": "--input data/surveying_recoded.csv --outdir analysis/p2/",
         "needs_ipums": False,
     },
 ]

@@ -105,12 +105,40 @@ def recode_veteran(df: pd.DataFrame) -> pd.Series:
 
 
 def recode_classwkr(df: pd.DataFrame) -> pd.Series:
-    """CLASSWKR -> 3-category class of worker."""
-    conditions = [
-        df["CLASSWKR"] == 22,                     # Private wage/salary
-        df["CLASSWKR"].isin([25, 27, 28]),         # Government
-        df["CLASSWKR"].isin([10, 13, 14]),         # Self-employed
-    ]
+    """CLASSWKR -> 3-category class of worker.
+    Uses CLASSWKRD (detailed) if available, falls back to CLASSWKR (general).
+    CLASSWKRD codes: 22-24=Private, 25-28=Government, 10-14=Self-employed
+    CLASSWKR general codes: 1=Self-employed, 2=Works for wages (no govt distinction)
+    """
+    if "CLASSWKRD" in df.columns:
+        col = df["CLASSWKRD"]
+        conditions = [
+            col.isin([22, 23, 24]),                # Private wage/salary
+            col.isin([25, 27, 28]),                # Government
+            col.isin([10, 13, 14]),                # Self-employed
+        ]
+    elif "CLASSWKR" in df.columns:
+        col = df["CLASSWKR"]
+        # Check if values look like detailed codes (>10) or general codes (1-2)
+        max_val = col.max()
+        if max_val > 10:
+            # Detailed codes in CLASSWKR column
+            conditions = [
+                col.isin([22, 23, 24]),            # Private wage/salary
+                col.isin([25, 27, 28]),            # Government
+                col.isin([10, 13, 14]),            # Self-employed
+            ]
+        else:
+            # General codes: 1=Self-employed, 2=Works for wages
+            conditions = [
+                col == 2,                          # Works for wages (private + govt combined)
+                pd.Series(False, index=df.index),  # Cannot distinguish govt with general codes
+                col == 1,                          # Self-employed
+            ]
+    else:
+        print("  WARNING: Neither CLASSWKR nor CLASSWKRD found.")
+        return pd.Series("Other/Unknown", index=df.index)
+
     choices = [
         "Private wage/salary",
         "Government",
