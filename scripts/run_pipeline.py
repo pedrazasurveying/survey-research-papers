@@ -7,14 +7,18 @@ Usage:
     python scripts/run_pipeline.py --ipums data/raw/usa_00001.csv
 
 This will run:
-    1. s1_data_ingest.py    — Filter IPUMS to surveying occupations
-    2. s2_recode.py         — Construct analysis variables
-    3. s3_benchmark_build.py — Build workforce benchmarks
-    4. s3b_bls_fetch.py     — Fetch BLS supplemental data
-    5. s4a_aging_analysis.py — Paper 1: aging/retirement cliff
-    6. s4b_disparity_analysis.py — Paper 2: demographic composition
-    7. s4c_earnings_analysis.py  — Paper 2: earnings gaps + regression
-    8. s4d_geographic_analysis.py — Paper 2: state-level demographics
+    1.  s1_data_ingest.py    — Filter IPUMS to surveying occupations
+    2.  s2_recode.py         — Construct analysis variables
+    3.  s3_benchmark_build.py — Build workforce benchmarks
+    4.  s3b_bls_fetch.py     — Fetch BLS supplemental data
+    5.  s4a_aging_analysis.py — Paper 1: aging/retirement cliff
+    6.  s4b_disparity_analysis.py — Paper 2: demographic composition
+    7.  s4c_earnings_analysis.py  — Paper 2: earnings gaps + regression
+    8.  s4d_geographic_analysis.py — Paper 2: state-level demographics
+    9.  s5a_tables_p1.py     — Paper 1: APA 7 tables (.docx)
+    10. s5b_tables_p2.py     — Paper 2: APA 7 tables (.docx)
+    11. s6a_figures_p1.py    — Paper 1: publication figures (.png/.pdf)
+    12. s6b_figures_p2.py    — Paper 2: publication figures (.png/.pdf)
 
 Each script can also be run individually. See --help on each for options.
 """
@@ -75,6 +79,30 @@ SCRIPTS = [
         "args_template": "--input data/surveying_recoded.csv --outdir analysis/p2/",
         "needs_ipums": False,
     },
+    {
+        "name": "S5A: TABLES (Paper 1)",
+        "script": "scripts/s5a_tables_p1.py",
+        "args_template": "--indir analysis/p1/ --outdir tables/p1/",
+        "needs_ipums": False,
+    },
+    {
+        "name": "S5B: TABLES (Paper 2)",
+        "script": "scripts/s5b_tables_p2.py",
+        "args_template": "--indir analysis/p2/ --outdir tables/p2/",
+        "needs_ipums": False,
+    },
+    {
+        "name": "S6A: FIGURES (Paper 1)",
+        "script": "scripts/s6a_figures_p1.py",
+        "args_template": "--indir analysis/p1/ --outdir figures/p1/",
+        "needs_ipums": False,
+    },
+    {
+        "name": "S6B: FIGURES (Paper 2)",
+        "script": "scripts/s6b_figures_p2.py",
+        "args_template": "--indir analysis/p2/ --outdir figures/p2/",
+        "needs_ipums": False,
+    },
 ]
 
 
@@ -105,7 +133,7 @@ def main():
     parser.add_argument("--ipums", required=True,
                         help="Path to FULL IPUMS extract (CSV)")
     parser.add_argument("--start-from", type=int, default=1,
-                        help="Start from script number (1-8). Useful for resuming.")
+                        help="Start from script number (1-12). Useful for resuming.")
     parser.add_argument("--stop-on-error", action="store_true",
                         help="Stop pipeline if any script fails")
     args = parser.parse_args()
@@ -175,6 +203,10 @@ def main():
         "analysis/p2/p2_wage_gaps.csv",
         "analysis/p2/p2_wage_regression.csv",
         "analysis/p2/p2_state_composition.csv",
+        "tables/p1/table1_age_distribution.docx",
+        "tables/p2/Table1_Composition.docx",
+        "figures/p1/fig1_median_age_comparison.png",
+        "figures/p2/fig1_representation_ratios.png",
     ]
 
     print(f"\nOutput files:")
