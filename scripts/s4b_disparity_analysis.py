@@ -208,9 +208,9 @@ def analyze_representation_ratios(df, benchmarks):
             ratio = surv_pct / bench_pct
 
         flag = ""
-        if not np.isna(ratio) and ratio < 0.5:
+        if not pd.isna(ratio) and ratio < 0.5:
             flag = "SEVERE UNDERREPRESENTATION"
-        elif not np.isna(ratio) and ratio < 0.8:
+        elif not pd.isna(ratio) and ratio < 0.8:
             flag = "Underrepresentation"
 
         n_unweighted = mask.sum()
@@ -219,7 +219,7 @@ def analyze_representation_ratios(df, benchmarks):
             "category": cat,
             "surveyor_pct": round(surv_pct, 2),
             "us_workforce_pct": round(bench_pct, 2) if not pd.isna(bench_pct) else np.nan,
-            "representation_ratio": round(ratio, 3) if not np.isna(ratio) else np.nan,
+            "representation_ratio": round(ratio, 3) if not pd.isna(ratio) else np.nan,
             "flag": flag,
             "unweighted_n": n_unweighted,
         })
