@@ -8,6 +8,21 @@ data/raw/*.sas7bdat
 # Keep the XML codebook
 !data/raw/*.xml
 
+# Generated output files (produced locally from IPUMS data)
+data/surveying_filtered.csv
+data/surveying_recoded.csv
+data/benchmarks.csv
+data/supplemental/
+analysis/p1/*.csv
+analysis/p2/*.csv
+analysis/p3/*.csv
+tables/p1/*.docx
+tables/p2/*.docx
+tables/p3/*.docx
+figures/p1/*
+figures/p2/*
+figures/p3/*
+
 # Python
 __pycache__/
 *.pyc
