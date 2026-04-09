@@ -240,11 +240,11 @@ def fig3_intersectional(intersectional, outdir):
 
     fig, ax = plt.subplots(figsize=(6, 5))
 
-    # Create annotation matrix
-    annot = pivot.copy()
+    # Create annotation matrix (must be object dtype to hold strings)
+    annot = pivot.copy().astype(object)
     for col in annot.columns:
         for idx in annot.index:
-            val = annot.loc[idx, col]
+            val = pivot.loc[idx, col]
             if pd.isna(val):
                 annot.loc[idx, col] = "—"
             else:
